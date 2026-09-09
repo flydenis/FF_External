@@ -49,7 +49,9 @@ class MemberApiMgr {
         const code = String((source && (source.status_code ?? source.statusCode)) || '');
         if (code === '0002') return { found: false, record: null };
         const rows = Array.isArray(source && source.data) ? source.data : [];
-        const record = (key ? rows.find(r => String(r.key || '').toUpperCase() === String(key || '').toUpperCase()) : rows[0]) || rows[0] || null;
+        const record = key
+            ? (rows.find(r => String(r.key || '').toUpperCase() === String(key).toUpperCase()) || null)
+            : (rows[0] || null);
         return { found: !!record, record };
     }
 }
