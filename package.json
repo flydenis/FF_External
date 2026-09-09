@@ -1,0 +1,17 @@
+{
+  "name": "ff-external",
+  "version": "1.0.0",
+  "private": true,
+  "description": "健身工廠 AI 客服 - External 外部知識點（會員體驗資訊查詢）",
+  "main": "app.js",
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2",
+    "http-errors": "^2.0.0",
+    "log4js": "^6.9.1"
+  }
+}

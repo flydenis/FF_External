@@ -1,0 +1,15 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "name": "丁大漢",
+            "storeName": "台北健康廠",
+            "trialStartDate": "2026-07-25",
+            "trialEndDate": "2026-07-31",
+            "advisorCode": "A1203",
+            "advisorName": "Kevin",
+            "trialStatus": "體驗中"
+        }
+    ]
+}
