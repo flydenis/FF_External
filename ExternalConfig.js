@@ -1,6 +1,6 @@
 module.exports = {
     Mode: 'Qbi',              // 'Product' | 'development' | 'Qbi'
-    port: 3025,
+    port: 3017,
     ErrorMaxCount: 3,
     RequestTimeout: 50000,
 
