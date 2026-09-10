@@ -18,6 +18,7 @@ var ExternalText = {
         // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
         CardStyle: {
             Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             StatusBadge: 'color:#f5a623;font-weight:600;font-size:13px;',
             Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
@@ -34,7 +35,7 @@ var ExternalText = {
             const advisor = [record.advisorCode, record.advisorName].filter(Boolean).join(' ');
             return `${ExternalText.MemberInfo.Intro}` +
                 `<div style="${s.Card}">` +
-                `<div style="display:flex;justify-content:space-between;align-items:center;">` +
+                `<div style="${s.TitleRow}">` +
                 `<span style="${s.Title}">體驗會員資訊</span><span style="${s.StatusBadge}">${record.trialStatus || ''}</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">姓名</span><span style="${s.Value}">${record.name || ''}</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">體驗廠館</span><span style="${s.Value}">${record.storeName || ''}</span></div>` +
@@ -53,6 +54,7 @@ var ExternalText = {
         // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
         CardStyle: {
             Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
             Label: 'color:#8a8a8a;',
@@ -64,7 +66,7 @@ var ExternalText = {
             const s = ExternalText.ContactAddress.CardStyle;
             return `${ExternalText.ContactAddress.Intro}` +
                 `<div style="${s.Card}">` +
-                `<div style="${s.Title}">登記地址</div>` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">登記地址</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">戶籍地址</span><span style="${s.Value}">${record.householdAddress || ''}</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">通訊地址</span><span style="${s.Value}">${record.contactAddress || ''}</span></div>` +
                 `</div>`;
@@ -79,6 +81,7 @@ var ExternalText = {
         // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
         CardStyle: {
             Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
             Label: 'color:#8a8a8a;',
@@ -90,7 +93,7 @@ var ExternalText = {
             const s = ExternalText.Phone.CardStyle;
             return `${ExternalText.Phone.Intro}` +
                 `<div style="${s.Card}">` +
-                `<div style="${s.Title}">登記電話</div>` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">登記電話</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">行動電話</span><span style="${s.Value}">${record.mobilePhone || ''}</span></div>` +
                 `</div>`;
         }
