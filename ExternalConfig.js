@@ -16,5 +16,19 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/trial-info' },
         development: { Url: 'https://dev-host/api/member/trial-info' },
         Qbi: { Url: './data/MemberInfoQbiResponse.json' }
+    },
+
+    // TODO(PM 確認)：客戶登記地址查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key），目前先放 placeholder
+    ContactAddressQuery: {
+        Product: { Url: 'https://prod-host/api/member/contact-address' },
+        development: { Url: 'https://dev-host/api/member/contact-address' },
+        Qbi: { Url: './data/ContactAddressQbiResponse.json' }
+    },
+
+    // TODO(PM 確認)：客戶登記電話查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key），目前先放 placeholder
+    PhoneQuery: {
+        Product: { Url: 'https://prod-host/api/member/phone' },
+        development: { Url: 'https://dev-host/api/member/phone' },
+        Qbi: { Url: './data/PhoneQbiResponse.json' }
     }
 };
