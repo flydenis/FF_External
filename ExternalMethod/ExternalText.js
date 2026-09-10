@@ -13,7 +13,7 @@ var ExternalText = {
     // 會員體驗資訊查詢流程文案（節點以 C010 起編）
     MemberInfo: {
         Intro: '已為您查詢體驗資訊如下：',
-        NotFound: '很抱歉，查無您的體驗會員資訊！',
+        NotFound: '很抱歉，查無您的體驗會員資訊！建議您洽詢客服人員或現場服務人員，由專人協助您進一步確認，謝謝！',
 
         // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
         CardStyle: {
@@ -41,6 +41,57 @@ var ExternalText = {
                 `<div style="${s.Row}"><span style="${s.Label}">體驗起訖日</span><span style="${s.Value}">${period}</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">服務顧問</span><span style="${s.Value}">${advisor}</span></div>` +
                 `<div style="${s.Note}">${ExternalText.MemberInfo.NoteText}</div>` +
+                `</div>`;
+        }
+    },
+
+    // 登記地址查詢流程文案（節點以 C010 起編）
+    ContactAddress: {
+        Intro: '您目前登記的地址如下（如需變更請至「個人資料變更」）：',
+        NotFound: '很抱歉，查無您的登記地址資訊！建議您洽詢客服人員或現場服務人員，由專人協助您進一步確認，謝謝！',
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;'
+        },
+
+        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/ContactAddressApiMgr 正規化後的資料。
+        buildCard(record) {
+            const s = ExternalText.ContactAddress.CardStyle;
+            return `${ExternalText.ContactAddress.Intro}` +
+                `<div style="${s.Card}">` +
+                `<div style="${s.Title}">登記地址</div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">戶籍地址</span><span style="${s.Value}">${record.householdAddress || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">通訊地址</span><span style="${s.Value}">${record.contactAddress || ''}</span></div>` +
+                `</div>`;
+        }
+    },
+
+    // 登記電話查詢流程文案（節點以 C010 起編）
+    Phone: {
+        Intro: '您目前登記的電話如下（如需變更請至「個人資料變更」）：',
+        NotFound: '很抱歉，查無您的登記電話資訊！建議您洽詢客服人員或現場服務人員，由專人協助您進一步確認，謝謝！',
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;'
+        },
+
+        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/PhoneApiMgr 正規化後的資料。
+        buildCard(record) {
+            const s = ExternalText.Phone.CardStyle;
+            return `${ExternalText.Phone.Intro}` +
+                `<div style="${s.Card}">` +
+                `<div style="${s.Title}">登記電話</div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">行動電話</span><span style="${s.Value}">${record.mobilePhone || ''}</span></div>` +
                 `</div>`;
         }
     }

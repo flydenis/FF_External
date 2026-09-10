@@ -11,6 +11,8 @@ const JsonCall = require('./ExternalMethod/JsonCall');
 const wording = require('./ExternalMethod/ExternalText');
 
 const MemberInfoQueryFlow = require('./ExternalFlow/MemberInfoQueryFlow');
+const ContactAddressQueryFlow = require('./ExternalFlow/ContactAddressQueryFlow');
+const PhoneQueryFlow = require('./ExternalFlow/PhoneQueryFlow');
 
 const app = express();
 app.use(log4js.connectLogger(log4js.getLogger('http'), { level: 'auto' }));
@@ -84,6 +86,8 @@ function runFlow({ req, res, FlowClass, flowName }) {
 
 // 流程路由：每流程一條「字面路徑」；新增流程只在此多加一條。
 app.post('/MemberInfoQueryFlow', (req, res) => runFlow({ req, res, FlowClass: MemberInfoQueryFlow, flowName: 'MemberInfoQueryFlow' }));
+app.post('/ContactAddressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ContactAddressQueryFlow, flowName: 'ContactAddressQueryFlow' }));
+app.post('/PhoneQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PhoneQueryFlow, flowName: 'PhoneQueryFlow' }));
 
 app.use((req, res, next) => next(createError(404)));
 app.use((err, req, res, next) => { res.status(err.status || 500).json({ error: err.message }); });
