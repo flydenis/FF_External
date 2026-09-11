@@ -30,5 +30,26 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/phone' },
         development: { Url: 'https://dev-host/api/member/phone' },
         Qbi: { Url: './data/PhoneQbiResponse.json' }
+    },
+
+    // 個人資料變更申請：受理後資料回寫 ECP 單元。
+    // TODO(PM 確認)：實際 ECP 單元路徑（目前沿用 EcpApi.Url 基底 + 下方 unit 佔位字串，待確認正式單元名稱與欄位對應）
+    PersonalDataChangeApi: {
+        EcpUnitPath: 'CUS.MemberDataChangeApply.Save.data'
+    },
+
+    // 身分證等證明文件上傳限制（僅 PersonalDataChange 流程使用）
+    PersonalDataChangeUpload: {
+        MaxFileSizeMB: 10,
+        MaxFileCount: 5,
+        AllowedExt: ['.jpg', '.jpeg', '.png', '.pdf']
+    },
+
+    // 欠費查詢（共用，供任何「申請/送單」類流程進入時檢查；僅提示、不擋收單）。
+    // TODO(PM 確認)：客戶欠費查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key）
+    OverdueQuery: {
+        Product: { Url: 'https://prod-host/api/member/overdue' },
+        development: { Url: 'https://dev-host/api/member/overdue' },
+        Qbi: { Url: './data/OverdueQbiResponse.json' }
     }
 };

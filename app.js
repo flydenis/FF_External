@@ -13,6 +13,8 @@ const wording = require('./ExternalMethod/ExternalText');
 const MemberInfoQueryFlow = require('./ExternalFlow/MemberInfoQueryFlow');
 const ContactAddressQueryFlow = require('./ExternalFlow/ContactAddressQueryFlow');
 const PhoneQueryFlow = require('./ExternalFlow/PhoneQueryFlow');
+const PersonalDataChangeFlow = require('./ExternalFlow/PersonalDataChangeFlow');
+const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
 
 const app = express();
 app.use(log4js.connectLogger(log4js.getLogger('http'), { level: 'auto' }));
@@ -88,6 +90,25 @@ function runFlow({ req, res, FlowClass, flowName }) {
 app.post('/MemberInfoQueryFlow', (req, res) => runFlow({ req, res, FlowClass: MemberInfoQueryFlow, flowName: 'MemberInfoQueryFlow' }));
 app.post('/ContactAddressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ContactAddressQueryFlow, flowName: 'ContactAddressQueryFlow' }));
 app.post('/PhoneQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PhoneQueryFlow, flowName: 'PhoneQueryFlow' }));
+app.post('/PersonalDataChangeFlow', (req, res) => runFlow({ req, res, FlowClass: PersonalDataChangeFlow, flowName: 'PersonalDataChangeFlow' }));
+
+// 個人資料變更申請的身分證明文件上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶。
+// 開放 CORS 是因為瀏覽器（ffwebchat-main）跟本服務不同源；本機測試先開放所有來源，
+// TODO(PM 確認)：正式環境要把 Access-Control-Allow-Origin 收斂成實際的前端網域，不要留 '*'。
+app.post('/PersonalDataChangeUpload', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  arrayUpload(req, res, (err) => {
+    const chatId = (req.body && req.body.ask_chatId) || 'unknown';
+    const logger = new LoggerMgr('PersonalDataChangeUpload', chatId);
+    if (err) {
+      logger.AlertLog(`上傳失敗: ${err.message}`);
+      return res.status(400).json({ ok: false, message: err.message });
+    }
+    const files = buildFileRefs(req.files);
+    logger.InfoLog(`上傳成功: ${JSON.stringify(files)}`);
+    res.json({ ok: true, files });
+  });
+});
 
 app.use((req, res, next) => next(createError(404)));
 app.use((err, req, res, next) => { res.status(err.status || 500).json({ error: err.message }); });

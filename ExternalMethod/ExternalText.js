@@ -2,7 +2,9 @@
 var ExternalText = {
     Public: {
         ServiceError: '目前服務忙線中，請稍後再試。',
-        ReturnSystemErrorMessage: '不好意思，目前系統異常，請稍後再試。'
+        ReturnSystemErrorMessage: '不好意思，目前系統異常，請稍後再試。',
+        // 共用欠費提醒：由 IntentBaseFlow.checkOverdueNotice() 附加在各「申請/送單」類流程的開場訊息前面。
+        OverdueNotice: '若有欠款則無法受理，請先查詢帳務繳費紀錄，並至廠館繳清費用，再提出申請。'
     },
     ExcallStatus: { Finish: '0', Continue: '1' },
     MessageType: { Text: 'Text', Cards: 'Cards', QuickReply: 'QuickReply' },
@@ -97,6 +99,17 @@ var ExternalText = {
                 `<div style="${s.Row}"><span style="${s.Label}">行動電話</span><span style="${s.Value}">${record.mobilePhone || ''}</span></div>` +
                 `</div>`;
         }
+    },
+
+    // 個人資料變更申請流程文案（節點以 C010 起編）
+    // OpenMarker 是 C010 回覆的固定文字，前端 personal-data-change-form.js 監看聊天訊息比對到同一句就彈出表單；
+    // 兩邊各自維護同一組常數字串，改這裡要同步改前端的 OPEN_MARKER。
+    PersonalDataChange: {
+        OpenMarker: '請於彈出視窗中填寫「個人資料變更申請」表單。',
+        MissingSelection: '請至少勾選一項要變更的項目（手機／戶籍地址／通訊地址／姓名）。',
+        InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
+        MissingIdCard: '變更戶籍地址或姓名需上傳身分證正反面，請重新上傳後再送出。',
+        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。'
     }
 };
 
