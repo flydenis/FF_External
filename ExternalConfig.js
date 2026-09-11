@@ -8,7 +8,10 @@ module.exports = {
 
     EcpApi: {
         Url: 'https://fitness-factory-km.qbicloud.com/ecp/',// TODO(PM 確認)：ECP 對話紀錄寫回端點；未設就不寫紀錄
-        Authorization: 'Authorization: Basic YXBpX3VzZXI6Q1NpaUBbNzcwNjYxODhd'      // 由部署平台環境變數注入，勿硬編碼
+        Authorization: 'Authorization: Basic YXBpX3VzZXI6Q1NpaUBbNzcwNjYxODhd',      // 由部署平台環境變數注入，勿硬編碼
+        // OpenAPI 2.0（/openapi/qs/user/token/apply）登入帳密：與上面 Authorization 為同一組帳號，供附件上傳(qs/attachment/upload)換 token 用。
+        LoginName: 'api_user',
+        Password: 'CSii@[77066188]'
     },
 
     // TODO(PM 確認)：客戶會員體驗資訊查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key）
