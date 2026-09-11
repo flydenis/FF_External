@@ -11,6 +11,7 @@ const JsonCall = require('./ExternalMethod/JsonCall');
 const wording = require('./ExternalMethod/ExternalText');
 
 const MemberInfoQueryFlow = require('./ExternalFlow/MemberInfoQueryFlow');
+const LeaveFlow = require('./ExternalFlow/LeaveFlow');
 const ContactAddressQueryFlow = require('./ExternalFlow/ContactAddressQueryFlow');
 const PhoneQueryFlow = require('./ExternalFlow/PhoneQueryFlow');
 const PersonalDataChangeFlow = require('./ExternalFlow/PersonalDataChangeFlow');
@@ -88,6 +89,7 @@ function runFlow({ req, res, FlowClass, flowName }) {
 
 // 流程路由：每流程一條「字面路徑」；新增流程只在此多加一條。
 app.post('/MemberInfoQueryFlow', (req, res) => runFlow({ req, res, FlowClass: MemberInfoQueryFlow, flowName: 'MemberInfoQueryFlow' }));
+app.post('/LeaveFlow', (req, res) => runFlow({ req, res, FlowClass: LeaveFlow, flowName: 'LeaveFlow' }));
 app.post('/ContactAddressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ContactAddressQueryFlow, flowName: 'ContactAddressQueryFlow' }));
 app.post('/PhoneQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PhoneQueryFlow, flowName: 'PhoneQueryFlow' }));
 app.post('/PersonalDataChangeFlow', (req, res) => runFlow({ req, res, FlowClass: PersonalDataChangeFlow, flowName: 'PersonalDataChangeFlow' }));
