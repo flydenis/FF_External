@@ -3,6 +3,8 @@ var ExternalText = {
     Public: {
         ServiceError: '目前服務忙線中，請稍後再試。',
         ReturnSystemErrorMessage: '不好意思，目前系統異常，請稍後再試。',
+        // 共用欠費提醒：由 IntentBaseFlow.checkOverdueNotice() 附加在各「申請/送單」類流程的開場訊息前面。
+        OverdueNotice: '若有欠款則無法受理，請先查詢帳務繳費紀錄，並至廠館繳清費用，再提出申請。',
         GiveUp: '您輸入錯誤已達上限，請重新發起本次申請，或聯繫客服協助。'
     },
     ExcallStatus: { Finish: '0', Continue: '1' },
@@ -67,6 +69,7 @@ var ExternalText = {
         // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
         CardStyle: {
             Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             StatusBadge: 'color:#f5a623;font-weight:600;font-size:13px;',
             Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
@@ -83,7 +86,7 @@ var ExternalText = {
             const advisor = [record.advisorCode, record.advisorName].filter(Boolean).join(' ');
             return `${ExternalText.MemberInfo.Intro}` +
                 `<div style="${s.Card}">` +
-                `<div style="display:flex;justify-content:space-between;align-items:center;">` +
+                `<div style="${s.TitleRow}">` +
                 `<span style="${s.Title}">體驗會員資訊</span><span style="${s.StatusBadge}">${record.trialStatus || ''}</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">姓名</span><span style="${s.Value}">${record.name || ''}</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">體驗廠館</span><span style="${s.Value}">${record.storeName || ''}</span></div>` +
@@ -102,6 +105,7 @@ var ExternalText = {
         // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
         CardStyle: {
             Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
             Label: 'color:#8a8a8a;',
@@ -113,7 +117,7 @@ var ExternalText = {
             const s = ExternalText.ContactAddress.CardStyle;
             return `${ExternalText.ContactAddress.Intro}` +
                 `<div style="${s.Card}">` +
-                `<div style="${s.Title}">登記地址</div>` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">登記地址</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">戶籍地址</span><span style="${s.Value}">${record.householdAddress || ''}</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">通訊地址</span><span style="${s.Value}">${record.contactAddress || ''}</span></div>` +
                 `</div>`;
@@ -128,6 +132,7 @@ var ExternalText = {
         // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
         CardStyle: {
             Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
             Label: 'color:#8a8a8a;',
@@ -139,10 +144,21 @@ var ExternalText = {
             const s = ExternalText.Phone.CardStyle;
             return `${ExternalText.Phone.Intro}` +
                 `<div style="${s.Card}">` +
-                `<div style="${s.Title}">登記電話</div>` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">登記電話</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">行動電話</span><span style="${s.Value}">${record.mobilePhone || ''}</span></div>` +
                 `</div>`;
         }
+    },
+
+    // 個人資料變更申請流程文案（節點以 C010 起編）
+    // OpenMarker 是 C010 回覆的固定文字，前端 personal-data-change-form.js 監看聊天訊息比對到同一句就彈出表單；
+    // 兩邊各自維護同一組常數字串，改這裡要同步改前端的 OPEN_MARKER。
+    PersonalDataChange: {
+        OpenMarker: '請於彈出視窗中填寫「個人資料變更申請」表單。',
+        MissingSelection: '請至少勾選一項要變更的項目（手機／戶籍地址／通訊地址／姓名）。',
+        InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
+        MissingIdCard: '變更戶籍地址或姓名需上傳身分證正反面，請重新上傳後再送出。',
+        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。'
     }
 };
 
