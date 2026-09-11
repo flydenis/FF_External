@@ -32,10 +32,11 @@ module.exports = {
         Qbi: { Url: './data/PhoneQbiResponse.json' }
     },
 
-    // 個人資料變更申請：受理後資料回寫 ECP 單元。
-    // TODO(PM 確認)：實際 ECP 單元路徑（目前沿用 EcpApi.Url 基底 + 下方 unit 佔位字串，待確認正式單元名稱與欄位對應）
+    // 個人資料變更申請：受理後資料回寫 ECP 單元 CUS.ChangeBasicInfo（PM 已確認單元編碼與欄位，見
+    // Api/PersonalDataChangeApiMgr.js 的 mapToEcpFields()）。
+    // TODO(PM 確認)：寫入方法後綴沿用 ChainseaApiMgr 既有慣例 .Save.data，實際方法名稱待對照 ECP 文件確認。
     PersonalDataChangeApi: {
-        EcpUnitPath: 'CUS.MemberDataChangeApply.Save.data'
+        EcpUnitPath: 'CUS.ChangeBasicInfo.Save.data'
     },
 
     // 身分證等證明文件上傳限制（僅 PersonalDataChange 流程使用）
