@@ -19,8 +19,9 @@ const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMg
 
 const app = express();
 app.use(log4js.connectLogger(log4js.getLogger('http'), { level: 'auto' }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+// 代理人流程表單將附件轉 base64 塞進 JSON 送出，預設 100kb 上限不夠，調高以容納圖片附件。
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
 
 app.all('*', (req, res, next) => {
   const body = req.body || {};

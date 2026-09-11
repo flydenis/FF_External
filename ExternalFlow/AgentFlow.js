@@ -69,28 +69,41 @@ class AgentFlow extends IntentBaseFlow {
                 return;
             }
             for (const u of T.Uploads) {
-                const file = this.resolveUpload(form.uploaded && form.uploaded[u.code], u.label);
-                if (!file) {
+                const files = this.resolveUploads(form.uploaded && form.uploaded[u.code], u.label);
+                if (!files.length) {
                     this.logger.AlertLog(`[${this.FlowName}] 附件 ${u.code} 無檔案內容，略過上傳`);
                     continue;
                 }
-                await AgentApplicationApiMgr.uploadEntityAttachment({
-                    entityId,
-                    fileName: file.fileName,
-                    fileBuffer: file.fileBuffer,
-                    contentType: file.contentType,
-                    logger: this.logger
-                });
+                for (const file of files) {
+                    await AgentApplicationApiMgr.uploadEntityAttachment({
+                        entityId,
+                        fileName: file.fileName,
+                        fileBuffer: file.fileBuffer,
+                        contentType: file.contentType,
+                        logger: this.logger
+                    });
+                }
             }
         } catch (error) {
             this.logger.AlertLog(`[${this.FlowName}] createOrder 失敗: ${error && error.stack ? error.stack : error}`);
         }
     }
 
-    // 從前端送回的上傳欄位解出檔案 bytes。相容幾種常見形態：
+    // 每個上傳項目前端可多選（最多 10 個），entry 是該項目的檔案陣列；逐一解出 bytes，解不出的（該筆）跳過不中斷其它筆。
+    resolveUploads(entry, defaultName) {
+        if (!entry) return [];
+        const list = Array.isArray(entry) ? entry : [entry];
+        const files = [];
+        for (const item of list) {
+            const file = this.resolveUpload(item, defaultName);
+            if (file) files.push(file);
+        }
+        return files;
+    }
+
+    // 從前端送回的單一上傳欄位解出檔案 bytes。相容幾種常見形態：
     //   data URL 字串（data:mime;base64,xxx）、純 base64 字串、或物件 { fileName/name, content/base64/data, contentType/type }。
     // 解不出內容（例如只給布林旗標）回 null，由呼叫端記 log 略過。defaultName 為顯示檔名（如「切結書」）。
-    // TODO(前端確認)：實際送回的檔案欄位格式敲定後，若與此不同再調整這裡。
     resolveUpload(entry, defaultName) {
         if (!entry || entry === true) return null;
         let fileName = defaultName;
