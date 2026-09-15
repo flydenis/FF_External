@@ -23,6 +23,10 @@ class Ai3Api {
         return personalDataChangeApiMgr.submit(payload);
     }
 
+    uploadPersonalDataChangeAttachment(payload) {
+        return personalDataChangeApiMgr.uploadEntityAttachment(payload);
+    }
+
     queryOverdue(payload) {
         return overdueApiMgr.query(payload);
     }
