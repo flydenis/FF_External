@@ -49,6 +49,14 @@ module.exports = {
         AllowedExt: ['.jpg', '.jpeg', '.png', '.pdf']
     },
 
+    // 代理人流程附件上傳限制（切結書/代理人證件/會員證件，走獨立 /AgentUpload 端點，不經 ask_input）。
+    // 與前端 AgentForm.js 的 UPLOADS 限制（僅 jpg/jpeg/png、單檔 10MB、單項最多 10 個）保持一致。
+    AgentUpload: {
+        MaxFileSizeMB: 10,
+        MaxFileCount: 10,
+        AllowedExt: ['.jpg', '.jpeg', '.png']
+    },
+
     // 欠費查詢（共用，供任何「申請/送單」類流程進入時檢查；僅提示、不擋收單）。
     // TODO(PM 確認)：客戶欠費查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key）
     OverdueQuery: {
