@@ -16,6 +16,7 @@ const ContactAddressQueryFlow = require('./ExternalFlow/ContactAddressQueryFlow'
 const PhoneQueryFlow = require('./ExternalFlow/PhoneQueryFlow');
 const PersonalDataChangeFlow = require('./ExternalFlow/PersonalDataChangeFlow');
 const InvoiceInfoChangeFlow = require('./ExternalFlow/InvoiceInfoChangeFlow');
+const PaymentHistoryQueryFlow = require('./ExternalFlow/PaymentHistoryQueryFlow');
 const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
 const { arrayUpload: agentArrayUpload, buildFileRefs: buildAgentFileRefs } = require('./Api/AgentUploadMgr');
 
@@ -96,6 +97,7 @@ app.post('/ContactAddressQueryFlow', (req, res) => runFlow({ req, res, FlowClass
 app.post('/PhoneQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PhoneQueryFlow, flowName: 'PhoneQueryFlow' }));
 app.post('/PersonalDataChangeFlow', (req, res) => runFlow({ req, res, FlowClass: PersonalDataChangeFlow, flowName: 'PersonalDataChangeFlow' }));
 app.post('/InvoiceInfoChangeFlow', (req, res) => runFlow({ req, res, FlowClass: InvoiceInfoChangeFlow, flowName: 'InvoiceInfoChangeFlow' }));
+app.post('/PaymentHistoryQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PaymentHistoryQueryFlow, flowName: 'PaymentHistoryQueryFlow' }));
 
 // 個人資料變更申請的身分證明文件上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶。
 // 開放 CORS 是因為瀏覽器（ffwebchat-main）跟本服務不同源；本機測試先開放所有來源，
