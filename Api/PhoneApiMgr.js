@@ -4,11 +4,11 @@ const fs = require('fs');
 const ExternalConfig = require('../ExternalConfig');
 const CommonMethod = require('../ExternalMethod/CommonMethod');
 
-// 查會員體驗資訊。Product/development → 呼叫客戶 API；Qbi → 讀本機 data/ mock。
+// 查登記電話。Product/development → 呼叫客戶 API；Qbi → 讀本機 data/ mock。
 // TODO(PM 確認)：query() 目前用 key 當查詢條件的預留欄位，實際 request 要帶什麼欄位（會員編號/手機/chatId 對應識別碼）待客戶 API 規格確定後調整。
-class MemberApiMgr {
+class PhoneApiMgr {
     async query({ chatId, key, logger }) {
-        const cfg = (ExternalConfig.MemberInfoQuery && ExternalConfig.MemberInfoQuery[ExternalConfig.Mode]) || {};
+        const cfg = (ExternalConfig.PhoneQuery && ExternalConfig.PhoneQuery[ExternalConfig.Mode]) || {};
         const started = Date.now();
 
         let source;
@@ -19,22 +19,22 @@ class MemberApiMgr {
             if (filePath !== dataDir && !filePath.startsWith(dataDir + path.sep)) {
                 throw new Error('invalid Qbi data path');
             }
-            logger && logger.InfoLog(`[MemberApiMgr] → 讀本機 mock: ${filePath}`);
+            logger && logger.InfoLog(`[PhoneApiMgr] → 讀本機 mock: ${filePath}`);
             source = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-            logger && logger.InfoLog(`[MemberApiMgr] ← mock 回傳（${Date.now() - started}ms）Body: ${JSON.stringify(source)}`);
+            logger && logger.InfoLog(`[PhoneApiMgr] ← mock 回傳（${Date.now() - started}ms）Body: ${JSON.stringify(source)}`);
         } else {
-            const body = { name: 'MemberTrialInfoQuery', from: 'csr', sessionId: chatId || CommonMethod.makeSessionId(), formData: { key } };
-            logger && logger.InfoLog(`[MemberApiMgr] → 呼叫 API: ${cfg.Url}`);
-            logger && logger.InfoLog(`[MemberApiMgr] → Request Body: ${JSON.stringify(body)}`);
+            const body = { name: 'PhoneQuery', from: 'csr', sessionId: chatId || CommonMethod.makeSessionId(), formData: { key } };
+            logger && logger.InfoLog(`[PhoneApiMgr] → 呼叫 API: ${cfg.Url}`);
+            logger && logger.InfoLog(`[PhoneApiMgr] → Request Body: ${JSON.stringify(body)}`);
             const resp = await axios.post(cfg.Url, body, {
                 timeout: ExternalConfig.RequestTimeout,
                 headers: { 'Content-Type': 'application/json' }
             });
-            logger && logger.InfoLog(`[MemberApiMgr] ← 回傳（${Date.now() - started}ms, HTTP ${resp.status}）Body: ${JSON.stringify(resp.data)}`);
+            logger && logger.InfoLog(`[PhoneApiMgr] ← 回傳（${Date.now() - started}ms, HTTP ${resp.status}）Body: ${JSON.stringify(resp.data)}`);
             source = this.parseSource(resp.data);
         }
         const result = this.normalize(source, key);
-        logger && logger.InfoLog(`[MemberApiMgr] 解析結果: found=${result.found}`);
+        logger && logger.InfoLog(`[PhoneApiMgr] 解析結果: found=${result.found}`);
         return result;
     }
 
@@ -56,4 +56,4 @@ class MemberApiMgr {
     }
 }
 
-module.exports = new MemberApiMgr();
+module.exports = new PhoneApiMgr();
