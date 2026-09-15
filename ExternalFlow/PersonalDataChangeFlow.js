@@ -2,6 +2,7 @@ const IntentBaseFlow = require('./IntentBaseFlow');
 const wording = require('../ExternalMethod/ExternalText');
 const ai3Api = require('../ExternalMethod/Ai3Api');
 const ExternalConfig = require('../ExternalConfig');
+const PersonalDataChangeUploadMgr = require('../Api/PersonalDataChangeUploadMgr');
 
 const P = wording.PersonalDataChange;
 const MOBILE_PATTERN = /^09\d{8}$/;
@@ -34,8 +35,43 @@ class PersonalDataChangeFlow extends IntentBaseFlow {
         }
 
         this.logger.InfoLog(`[${this.FlowName}] C020 申請驗證通過，受理送出`);
-        await ai3Api.submitPersonalDataChange({ chatId: this.chatId, applyData: payload, logger: this.logger });
+        await this.submitAndUploadIdCard(payload);
         return this.reply({ message: P.SubmitDone, isContinuum: '0' });
+    }
+
+    // 受理送出 + 逐一上傳身分證正反面附件（比照 ExternalFlow/AgentFlow.js 的 createOrder 作法：
+    // 附件走 /PersonalDataChangeUpload 暫存於 uploads/，這裡依 fileId 讀回實際 bytes 上傳，成功才清暫存檔）。
+    // 取不到 entityId 或個別附件讀取失敗都只記 AlertLog、不中斷流程——使用者的申請本身已受理，
+    // 附件掛不上去屬於可事後補救的個案，不應讓使用者卡在對話裡。
+    async submitAndUploadIdCard(payload) {
+        const result = await ai3Api.submitPersonalDataChange({ chatId: this.chatId, applyData: payload, logger: this.logger });
+        const idCardFiles = Array.isArray(payload.idCardFiles) ? payload.idCardFiles : [];
+        if (!idCardFiles.length) return;
+
+        const entityId = result && result.entityId;
+        if (!entityId) {
+            this.logger.AlertLog(`[${this.FlowName}] submitAndUploadIdCard 未取得 entityId，略過身分證附件上傳`);
+            return;
+        }
+
+        for (const ref of idCardFiles) {
+            if (!ref || !ref.fileId) continue;
+            const fileBuffer = PersonalDataChangeUploadMgr.readFile(ref.fileId);
+            if (!fileBuffer || !fileBuffer.length) {
+                this.logger.AlertLog(`[${this.FlowName}] 附件讀取失敗，略過上傳（fileId=${ref.fileId}）`);
+                continue;
+            }
+            const fileName = ref.fileName || ref.fileId;
+            const uploaded = await ai3Api.uploadPersonalDataChangeAttachment({
+                entityId,
+                fileName,
+                fileBuffer,
+                contentType: PersonalDataChangeUploadMgr.mimeFromExt(fileName),
+                logger: this.logger
+            });
+            // 上傳到 ECP 成功才清暫存檔；失敗保留，方便之後補上傳或排查。
+            if (uploaded) PersonalDataChangeUploadMgr.removeFile(ref.fileId, this.logger);
+        }
     }
 
     // 依【功能說明】檢核：四選一至少一項且有填值、聯絡方式擇一格式正確、變更戶籍地址/姓名須有身分證正反面。
