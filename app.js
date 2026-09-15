@@ -12,12 +12,16 @@ const wording = require('./ExternalMethod/ExternalText');
 
 const MemberInfoQueryFlow = require('./ExternalFlow/MemberInfoQueryFlow');
 const LeaveFlow = require('./ExternalFlow/LeaveFlow');
+const ContactAddressQueryFlow = require('./ExternalFlow/ContactAddressQueryFlow');
+const PhoneQueryFlow = require('./ExternalFlow/PhoneQueryFlow');
+const PersonalDataChangeFlow = require('./ExternalFlow/PersonalDataChangeFlow');
+const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
+const { arrayUpload: agentArrayUpload, buildFileRefs: buildAgentFileRefs } = require('./Api/AgentUploadMgr');
 
 const app = express();
 app.use(log4js.connectLogger(log4js.getLogger('http'), { level: 'auto' }));
-// 代理人流程表單將附件轉 base64 塞進 JSON 送出，預設 100kb 上限不夠，調高以容納圖片附件。
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.all('*', (req, res, next) => {
   const body = req.body || {};
@@ -87,6 +91,23 @@ function runFlow({ req, res, FlowClass, flowName }) {
 // 流程路由：每流程一條「字面路徑」；新增流程只在此多加一條。
 app.post('/MemberInfoQueryFlow', (req, res) => runFlow({ req, res, FlowClass: MemberInfoQueryFlow, flowName: 'MemberInfoQueryFlow' }));
 app.post('/LeaveFlow', (req, res) => runFlow({ req, res, FlowClass: LeaveFlow, flowName: 'LeaveFlow' }));
+
+// 代理人流程的切結書/代理人證件/會員證件上傳：同樣非對話輪次，前端選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶。
+// TODO(PM 確認)：正式環境要把 Access-Control-Allow-Origin 收斂成實際的前端網域，不要留 '*'。
+app.post('/AgentUpload', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  agentArrayUpload(req, res, (err) => {
+    const chatId = (req.body && req.body.ask_chatId) || 'unknown';
+    const logger = new LoggerMgr('AgentUpload', chatId);
+    if (err) {
+      logger.AlertLog(`上傳失敗: ${err.message}`);
+      return res.status(400).json({ ok: false, message: err.message });
+    }
+    const files = buildAgentFileRefs(req.files);
+    logger.InfoLog(`上傳成功: ${JSON.stringify(files)}`);
+    res.json({ ok: true, files });
+  });
+});
 
 app.use((req, res, next) => next(createError(404)));
 app.use((err, req, res, next) => { res.status(err.status || 500).json({ error: err.message }); });

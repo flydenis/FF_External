@@ -1,6 +1,7 @@
 const IntentBaseFlow = require('./IntentBaseFlow');
 const wording = require('../ExternalMethod/ExternalText');
 const AgentApplicationApiMgr = require('../Api/AgentApplicationApiMgr');
+const AgentUploadMgr = require('../Api/AgentUploadMgr');
 
 const T = wording.AgentFlow;
 
@@ -69,19 +70,26 @@ class AgentFlow extends IntentBaseFlow {
                 return;
             }
             for (const u of T.Uploads) {
-                const files = this.resolveUploads(form.uploaded && form.uploaded[u.code], u.label);
-                if (!files.length) {
+                const refs = this.normalizeRefs(form.uploaded && form.uploaded[u.code]);
+                if (!refs.length) {
                     this.logger.AlertLog(`[${this.FlowName}] 附件 ${u.code} 無檔案內容，略過上傳`);
                     continue;
                 }
-                for (const file of files) {
-                    await AgentApplicationApiMgr.uploadEntityAttachment({
+                for (const ref of refs) {
+                    const file = this.resolveUpload(ref);
+                    if (!file) {
+                        this.logger.AlertLog(`[${this.FlowName}] 附件 ${u.code} 檔案讀取失敗，略過上傳（fileId=${ref && ref.fileId}）`);
+                        continue;
+                    }
+                    const uploaded = await AgentApplicationApiMgr.uploadEntityAttachment({
                         entityId,
                         fileName: file.fileName,
                         fileBuffer: file.fileBuffer,
                         contentType: file.contentType,
                         logger: this.logger
                     });
+                    // 上傳到 ECP 成功才清暫存檔；失敗保留，方便之後補上傳或排查。
+                    if (uploaded) AgentUploadMgr.removeFile(ref.fileId, this.logger);
                 }
             }
         } catch (error) {
@@ -89,40 +97,20 @@ class AgentFlow extends IntentBaseFlow {
         }
     }
 
-    // 每個上傳項目前端可多選（最多 10 個），entry 是該項目的檔案陣列；逐一解出 bytes，解不出的（該筆）跳過不中斷其它筆。
-    resolveUploads(entry, defaultName) {
+    // 表單送回的上傳欄位是前端呼叫 /AgentUpload 拿到的檔案參考 { fileId, fileName, size }（前端可多選，最多 10 個），
+    // 可能是單一物件也可能是陣列；統一成陣列處理。
+    normalizeRefs(entry) {
         if (!entry) return [];
-        const list = Array.isArray(entry) ? entry : [entry];
-        const files = [];
-        for (const item of list) {
-            const file = this.resolveUpload(item, defaultName);
-            if (file) files.push(file);
-        }
-        return files;
+        return Array.isArray(entry) ? entry : [entry];
     }
 
-    // 從前端送回的單一上傳欄位解出檔案 bytes。相容幾種常見形態：
-    //   data URL 字串（data:mime;base64,xxx）、純 base64 字串、或物件 { fileName/name, content/base64/data, contentType/type }。
-    // 解不出內容（例如只給布林旗標）回 null，由呼叫端記 log 略過。defaultName 為顯示檔名（如「切結書」）。
-    resolveUpload(entry, defaultName) {
-        if (!entry || entry === true) return null;
-        let fileName = defaultName;
-        let contentType;
-        let b64 = null;
-        if (typeof entry === 'string') {
-            b64 = entry;
-        } else if (typeof entry === 'object') {
-            fileName = entry.fileName || entry.name || defaultName;
-            contentType = entry.contentType || entry.type;
-            b64 = entry.content || entry.base64 || entry.data || null;
-        }
-        if (typeof b64 !== 'string' || !b64) return null;
-        const m = /^data:([^;]+);base64,(.*)$/.exec(b64);
-        if (m) { contentType = contentType || m[1]; b64 = m[2]; }
-        let fileBuffer;
-        try { fileBuffer = Buffer.from(b64, 'base64'); } catch (e) { return null; }
+    // 依檔案參考 { fileId, fileName } 回 uploads/agent/ 讀出實際內容（AgentUploadMgr.readFile 已做路徑防護）。
+    // 讀不到（fileId 缺漏、檔案不存在、已被清過）回 null，由呼叫端記 log 略過。
+    resolveUpload(ref) {
+        if (!ref || typeof ref !== 'object' || !ref.fileId) return null;
+        const fileBuffer = AgentUploadMgr.readFile(ref.fileId);
         if (!fileBuffer || !fileBuffer.length) return null;
-        return { fileBuffer, fileName, contentType };
+        return { fileBuffer, fileName: ref.fileName || ref.fileId, contentType: AgentUploadMgr.mimeFromExt(ref.fileName || ref.fileId) };
     }
 
     // 供呼叫端併入 ECP 對話紀錄的狀態快照。
