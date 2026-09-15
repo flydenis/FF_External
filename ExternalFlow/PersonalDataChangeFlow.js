@@ -49,6 +49,8 @@ class PersonalDataChangeFlow extends IntentBaseFlow {
         const hasEmptyValue = selectedKeys.some(k => !String(values[k] || '').trim());
         if (hasEmptyValue) return P.MissingSelection;
 
+        if (items.mobile && !MOBILE_PATTERN.test(String(values.mobile || '').trim())) return P.InvalidMobile;
+
         const contactType = payload.contactType;
         const contactValue = String(payload.contactValue || '').trim();
         const contactOk = (contactType === 'phone' && MOBILE_PATTERN.test(contactValue)) ||
