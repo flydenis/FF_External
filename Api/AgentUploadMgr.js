@@ -4,14 +4,14 @@ const crypto = require('crypto');
 const multer = require('multer');
 const ExternalConfig = require('../ExternalConfig');
 
-// 個人資料變更申請的身分證明文件上傳。存放路徑固定為 uploads/，檔名一律伺服器端產生（不採信使用者原始檔名），
-// 防 Path Manipulation（CWE-22）。型態/大小/數量限制走 ExternalConfig.PersonalDataChangeUpload。
-const uploadDir = path.join(__dirname, '..', 'uploads');
+// 代理人流程附件上傳（切結書/代理人證件/會員證件）。獨立子目錄 uploads/agent/，與 PersonalDataChangeUpload 分開存放。
+// 檔名一律伺服器端產生（不採信使用者原始檔名），防 Path Manipulation（CWE-22）。型態/大小/數量限制走 ExternalConfig.AgentUpload。
+const uploadDir = path.join(__dirname, '..', 'uploads', 'agent');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-const rules = ExternalConfig.PersonalDataChangeUpload || {};
-const allowedExt = rules.AllowedExt || ['.jpg', '.jpeg', '.png', '.pdf'];
-const MIME_BY_EXT = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.pdf': 'application/pdf' };
+const rules = ExternalConfig.AgentUpload || {};
+const allowedExt = rules.AllowedExt || ['.jpg', '.jpeg', '.png'];
+const MIME_BY_EXT = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png' };
 
 // multer/busboy 依 multipart 規範預設把檔名當 latin1 解碼，中文（UTF-8 多位元組）因此變亂碼。
 // 瀏覽器實際送出的是 UTF-8 位元組，這裡轉回來：先以 latin1 還原成原始位元組，再用 utf8 重新解碼。
@@ -32,7 +32,7 @@ const upload = multer({
     storage,
     limits: {
         fileSize: (rules.MaxFileSizeMB || 10) * 1024 * 1024,
-        files: rules.MaxFileCount || 5
+        files: rules.MaxFileCount || 10
     },
     fileFilter: (req, file, cb) => {
         // 修正發生在 fileFilter（multer 管線最早拿到 file 物件的地方），修正後的 originalname 會沿用到
@@ -69,23 +69,23 @@ function readFile(fileId) {
     }
 }
 
-// 上傳到 ECP 成功後呼叫，清掉本機暫存檔，避免 uploads/ 累積孤兒檔案。刪除失敗只記 log，不影響流程。
+// 上傳到 ECP 成功後呼叫，清掉本機暫存檔，避免 uploads/agent/ 累積孤兒檔案。刪除失敗只記 log，不影響流程。
 function removeFile(fileId, logger) {
     const filePath = resolveSafePath(fileId);
     if (!filePath) return;
     fs.unlink(filePath, (err) => {
-        if (err) logger && logger.AlertLog(`[PersonalDataChangeUploadMgr] 刪除暫存檔失敗: ${filePath} - ${err.message}`);
+        if (err) logger && logger.AlertLog(`[AgentUploadMgr] 刪除暫存檔失敗: ${filePath} - ${err.message}`);
     });
 }
 
-// 依副檔名推斷 Content-Type（僅支援 allowedExt 範圍內的格式）。
+// 依副檔名推斷 Content-Type（僅支援 allowedExt 範圍內的圖片格式）。
 function mimeFromExt(fileNameOrId) {
     const ext = path.extname(String(fileNameOrId || '')).toLowerCase();
     return MIME_BY_EXT[ext] || 'application/octet-stream';
 }
 
 module.exports = {
-    arrayUpload: upload.array('files', rules.MaxFileCount || 5),
+    arrayUpload: upload.array('files', rules.MaxFileCount || 10),
     buildFileRefs,
     readFile,
     removeFile,

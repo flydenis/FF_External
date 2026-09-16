@@ -42,6 +42,12 @@ module.exports = {
         EcpUnitPath: 'CUS.ChangeBasicInfo.Save.data'
     },
 
+    // 發票資訊變更申請：與個人資料變更共用同一個 ECP 單元 CUS.ChangeBasicInfo（PM 已確認），
+    // 差別只在欄位對應不同，見 Api/InvoiceInfoChangeApiMgr.js 的 mapToEcpFields()。
+    InvoiceInfoChangeApi: {
+        EcpUnitPath: 'CUS.ChangeBasicInfo.Save.data'
+    },
+
     // 身分證等證明文件上傳限制（僅 PersonalDataChange 流程使用）
     PersonalDataChangeUpload: {
         MaxFileSizeMB: 10,

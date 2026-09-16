@@ -33,6 +33,11 @@ class BaseFlow {
                 this.res.send(JsonTemplate.getResponse({ ...responseObj, from: this.askPlatform }));
             }
             this.recordTurn(stepExecuted, responseObj);
+            // 流程結束（isContinuum:'0'）時標記清除，下一輪 runFlow 偵測到就丟掉這個實例的殘留狀態（currentStep 等），
+            // 讓使用者下一句新訊息（例如重新選單）能從流程開頭重新起，而不是被當成舊流程最後那一步的輸入繼續解析。
+            if (responseObj && responseObj.isContinuum === '0') {
+                global.clearConversationStateFlag.add(this.chatId);
+            }
         } catch (error) {
             this.logger.AlertLog('exception: ' + (error && error.stack ? error.stack : error));
             if (this.res && !this.res.headersSent) {
@@ -40,6 +45,8 @@ class BaseFlow {
                     isContinuum: '0', messageType: 'Text', message: ExternalText.Public.ReturnSystemErrorMessage, from: this.askPlatform
                 }));
             }
+            // 例外視同流程異常終止，同樣清掉狀態，避免卡在壞掉的節點無法重新開始。
+            global.clearConversationStateFlag.add(this.chatId);
         }
     }
 

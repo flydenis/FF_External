@@ -18,6 +18,9 @@ const PersonalDataChangeFlow = require('./ExternalFlow/PersonalDataChangeFlow');
 const personalDataChangeUploadMgr = require('./Api/PersonalDataChangeUploadMgr');
 const agentUploadMgr = require('./Api/AgentUploadMgr');
 const leaveUploadMgr = require('./Api/LeaveUploadMgr');
+const InvoiceInfoChangeFlow = require('./ExternalFlow/InvoiceInfoChangeFlow');
+const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
+const { arrayUpload: agentArrayUpload, buildFileRefs: buildAgentFileRefs } = require('./Api/AgentUploadMgr');
 
 const app = express();
 app.use(log4js.connectLogger(log4js.getLogger('http'), { level: 'auto' }));
@@ -95,6 +98,7 @@ app.post('/LeaveFlow', (req, res) => runFlow({ req, res, FlowClass: LeaveFlow, f
 app.post('/ContactAddressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ContactAddressQueryFlow, flowName: 'ContactAddressQueryFlow' }));
 app.post('/PhoneQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PhoneQueryFlow, flowName: 'PhoneQueryFlow' }));
 app.post('/PersonalDataChangeFlow', (req, res) => runFlow({ req, res, FlowClass: PersonalDataChangeFlow, flowName: 'PersonalDataChangeFlow' }));
+app.post('/InvoiceInfoChangeFlow', (req, res) => runFlow({ req, res, FlowClass: InvoiceInfoChangeFlow, flowName: 'InvoiceInfoChangeFlow' }));
 
 // 各流程的檔案上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶（不經 ask_input，
 // 避免撞到 ECP 對話引擎自己的 FOriginArgs 欄位長度限制）。三支路由共用同一套 handleUpload 處理邏輯，
@@ -121,6 +125,23 @@ function handleUpload(mgr, label) {
 app.post('/PersonalDataChangeUpload', handleUpload(personalDataChangeUploadMgr, 'PersonalDataChangeUpload'));
 app.post('/AgentUpload', handleUpload(agentUploadMgr, 'AgentUpload'));
 app.post('/LeaveUpload', handleUpload(leaveUploadMgr, 'LeaveUpload'));
+
+// 代理人流程的切結書/代理人證件/會員證件上傳：同樣非對話輪次，前端選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶。
+// TODO(PM 確認)：正式環境要把 Access-Control-Allow-Origin 收斂成實際的前端網域，不要留 '*'。
+app.post('/AgentUpload', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  agentArrayUpload(req, res, (err) => {
+    const chatId = (req.body && req.body.ask_chatId) || 'unknown';
+    const logger = new LoggerMgr('AgentUpload', chatId);
+    if (err) {
+      logger.AlertLog(`上傳失敗: ${err.message}`);
+      return res.status(400).json({ ok: false, message: err.message });
+    }
+    const files = buildAgentFileRefs(req.files);
+    logger.InfoLog(`上傳成功: ${JSON.stringify(files)}`);
+    res.json({ ok: true, files });
+  });
+});
 
 app.use((req, res, next) => next(createError(404)));
 app.use((err, req, res, next) => { res.status(err.status || 500).json({ error: err.message }); });
