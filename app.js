@@ -15,13 +15,14 @@ const LeaveFlow = require('./ExternalFlow/LeaveFlow');
 const ContactAddressQueryFlow = require('./ExternalFlow/ContactAddressQueryFlow');
 const PhoneQueryFlow = require('./ExternalFlow/PhoneQueryFlow');
 const PersonalDataChangeFlow = require('./ExternalFlow/PersonalDataChangeFlow');
-const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
+const personalDataChangeUploadMgr = require('./Api/PersonalDataChangeUploadMgr');
+const agentUploadMgr = require('./Api/AgentUploadMgr');
+const leaveUploadMgr = require('./Api/LeaveUploadMgr');
 
 const app = express();
 app.use(log4js.connectLogger(log4js.getLogger('http'), { level: 'auto' }));
-// 代理人流程表單將附件轉 base64 塞進 JSON 送出，預設 100kb 上限不夠，調高以容納圖片附件。
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.all('*', (req, res, next) => {
   const body = req.body || {};
@@ -95,23 +96,31 @@ app.post('/ContactAddressQueryFlow', (req, res) => runFlow({ req, res, FlowClass
 app.post('/PhoneQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PhoneQueryFlow, flowName: 'PhoneQueryFlow' }));
 app.post('/PersonalDataChangeFlow', (req, res) => runFlow({ req, res, FlowClass: PersonalDataChangeFlow, flowName: 'PersonalDataChangeFlow' }));
 
-// 個人資料變更申請的身分證明文件上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶。
+// 各流程的檔案上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶（不經 ask_input，
+// 避免撞到 ECP 對話引擎自己的 FOriginArgs 欄位長度限制）。三支路由共用同一套 handleUpload 處理邏輯，
+// 各自的 multer 規則／存放子目錄則由 Api/UploadMgr.js 的工廠依 ExternalConfig 產生，不必重複寫。
 // 開放 CORS 是因為瀏覽器（ffwebchat-main）跟本服務不同源；本機測試先開放所有來源，
 // TODO(PM 確認)：正式環境要把 Access-Control-Allow-Origin 收斂成實際的前端網域，不要留 '*'。
-app.post('/PersonalDataChangeUpload', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  arrayUpload(req, res, (err) => {
-    const chatId = (req.body && req.body.ask_chatId) || 'unknown';
-    const logger = new LoggerMgr('PersonalDataChangeUpload', chatId);
-    if (err) {
-      logger.AlertLog(`上傳失敗: ${err.message}`);
-      return res.status(400).json({ ok: false, message: err.message });
-    }
-    const files = buildFileRefs(req.files);
-    logger.InfoLog(`上傳成功: ${JSON.stringify(files)}`);
-    res.json({ ok: true, files });
-  });
-});
+function handleUpload(mgr, label) {
+  return (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    mgr.arrayUpload(req, res, (err) => {
+      const chatId = (req.body && req.body.ask_chatId) || 'unknown';
+      const logger = new LoggerMgr(label, chatId);
+      if (err) {
+        logger.AlertLog(`上傳失敗: ${err.message}`);
+        return res.status(400).json({ ok: false, message: err.message });
+      }
+      const files = mgr.buildFileRefs(req.files);
+      logger.InfoLog(`上傳成功: ${JSON.stringify(files)}`);
+      res.json({ ok: true, files });
+    });
+  };
+}
+
+app.post('/PersonalDataChangeUpload', handleUpload(personalDataChangeUploadMgr, 'PersonalDataChangeUpload'));
+app.post('/AgentUpload', handleUpload(agentUploadMgr, 'AgentUpload'));
+app.post('/LeaveUpload', handleUpload(leaveUploadMgr, 'LeaveUpload'));
 
 app.use((req, res, next) => next(createError(404)));
 app.use((err, req, res, next) => { res.status(err.status || 500).json({ error: err.message }); });
