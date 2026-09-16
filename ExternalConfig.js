@@ -71,5 +71,14 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/payment-history' },
         development: { Url: 'https://dev-host/api/member/payment-history' },
         Qbi: { Url: './data/PaymentHistoryQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：查詢月費扣款日，客戶尚未提供 API 規格，Product/development 先放 placeholder，
+    // 目前 Mode 固定用 Qbi 讀本機 mock（見 data/PaymentDueDateQbiResponse.json），待客戶 API 到位後再補上實際網址與帶入欄位。
+    // 先只處理單一合約情境（PM 已確認），多合約情境待之後有需求再補。
+    PaymentDueDateQuery: {
+        Product: { Url: 'https://prod-host/api/member/payment-due-date' },
+        development: { Url: 'https://dev-host/api/member/payment-due-date' },
+        Qbi: { Url: './data/PaymentDueDateQbiResponse.json' }
     }
 };

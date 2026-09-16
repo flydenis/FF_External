@@ -258,6 +258,35 @@ var ExternalText = {
         }
     },
 
+    // 查詢月費扣款日流程文案（節點以 C010 起編）。
+    // PM 已確認：先只處理單一合約情境；預繳型無按月扣款日，另回 PrepaidNote。
+    PaymentDueDate: {
+        Intro: '您的月費扣款日說明如下：',
+        NotFound: '很抱歉，查無您的月費扣款日資訊！建議您洽詢客服人員或現場服務人員，由專人協助您進一步確認，謝謝！',
+        PrepaidNote: '您的會籍為預繳型，無按月扣款日資訊。',
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;'
+        },
+
+        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/PaymentDueDateApiMgr 正規化後的資料。
+        buildCard(record) {
+            const s = ExternalText.PaymentDueDate.CardStyle;
+            return `${ExternalText.PaymentDueDate.Intro}` +
+                `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">月費扣款日</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">扣款日</span><span style="${s.Value}">每月 ${record.dueDay} 日</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">特別說明</span><span style="${s.Value}">${record.note || ''}</span></div>` +
+                `</div>`;
+        }
+    },
+
     // 個人資料變更申請流程文案（節點以 C010 起編）
     // FormFlag 對應前端 FormFlow.registerForm('PersonalDataChangeForm', ...) 註冊的 key，
     // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。
