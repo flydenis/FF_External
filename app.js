@@ -20,6 +20,7 @@ const agentUploadMgr = require('./Api/AgentUploadMgr');
 const leaveUploadMgr = require('./Api/LeaveUploadMgr');
 const InvoiceInfoChangeFlow = require('./ExternalFlow/InvoiceInfoChangeFlow');
 const PaymentHistoryQueryFlow = require('./ExternalFlow/PaymentHistoryQueryFlow');
+const PaymentDueDateQueryFlow = require('./ExternalFlow/PaymentDueDateQueryFlow');
 const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
 const { arrayUpload: agentArrayUpload, buildFileRefs: buildAgentFileRefs } = require('./Api/AgentUploadMgr');
 
@@ -101,6 +102,7 @@ app.post('/PhoneQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PhoneQu
 app.post('/PersonalDataChangeFlow', (req, res) => runFlow({ req, res, FlowClass: PersonalDataChangeFlow, flowName: 'PersonalDataChangeFlow' }));
 app.post('/InvoiceInfoChangeFlow', (req, res) => runFlow({ req, res, FlowClass: InvoiceInfoChangeFlow, flowName: 'InvoiceInfoChangeFlow' }));
 app.post('/PaymentHistoryQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PaymentHistoryQueryFlow, flowName: 'PaymentHistoryQueryFlow' }));
+app.post('/PaymentDueDateQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PaymentDueDateQueryFlow, flowName: 'PaymentDueDateQueryFlow' }));
 
 // 各流程的檔案上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶（不經 ask_input，
 // 避免撞到 ECP 對話引擎自己的 FOriginArgs 欄位長度限制）。三支路由共用同一套 handleUpload 處理邏輯，
