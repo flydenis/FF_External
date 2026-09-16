@@ -10,18 +10,25 @@ const UNIFIED_PATTERN = /^\d{8}$/;
 // 三選一單選互斥（PM 已確認）：mobileBarcode 前端先隱藏不開放勾選，但資料結構先支援，供未來新系統開放使用。
 const VALID_TYPES = ['unified', 'memberDevice', 'mobileBarcode'];
 
-// 發票資訊變更申請：C010 回固定提示語，由前端 invoice-info-change-form.js 監看比對後彈出表單；
-// 使用者在表單送出後，前端把整份表單 JSON 當 ask_input 送回，本流程在 C020 收下並驗證/受理。
+// 發票資訊變更申請：C010 回 parameters:{ InvoiceInfoChangeForm:'InvoiceInfoChangeForm' }，
+// 由前端 FormFlow.js 攔截並開啟 InvoiceInfoChangeForm.js 的表單（欠費提醒／紅字提示語則由同一則
+// message 先渲染成對話泡泡）；使用者填完送出（或取消）後，FormFlow 把表單 values（或 {action:'CANCEL'}）
+// 當 ask_input 送回，本流程在 C020 收下並驗證/受理。
 class InvoiceInfoChangeFlow extends IntentBaseFlow {
     async C010() {
         this.logger.InfoLog(`[${this.FlowName}] C010 進入發票資訊變更申請`);
         const memberKey = this.customerData && this.customerData.memberKey;
         const overdueNotice = await this.checkOverdueNotice({ key: memberKey });
-        const parts = [overdueNotice, P.ReminderNotice, P.OpenMarker].filter(Boolean);
-        return this.reply({ message: parts.join('\n\n'), isContinuum: '1', nextStep: 'C020' });
+        const parts = [overdueNotice, P.ReminderNotice].filter(Boolean);
+        return this.reply({ message: parts.join('\n\n'), parameters: { [P.FormFlag]: P.FormFlag }, nextStep: 'C020' });
     }
 
     async C020() {
+        if (this.isCancelAction(this.askInput)) {
+            this.logger.InfoLog(`[${this.FlowName}] C020 使用者取消`);
+            return this.reply({ message: P.Cancelled, isContinuum: '0' });
+        }
+
         let payload = null;
         try { payload = JSON.parse(this.askInput); } catch (e) { payload = null; }
 

@@ -151,28 +151,30 @@ var ExternalText = {
     },
 
     // 個人資料變更申請流程文案（節點以 C010 起編）
-    // OpenMarker 是 C010 回覆的固定文字，前端 personal-data-change-form.js 監看聊天訊息比對到同一句就彈出表單；
-    // 兩邊各自維護同一組常數字串，改這裡要同步改前端的 OPEN_MARKER。
+    // FormFlag 對應前端 FormFlow.registerForm('PersonalDataChangeForm', ...) 註冊的 key，
+    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。
     PersonalDataChange: {
-        OpenMarker: '請於彈出視窗中填寫「個人資料變更申請」表單。',
+        FormFlag: 'PersonalDataChangeForm',
         MissingSelection: '請至少勾選一項要變更的項目（手機／戶籍地址／通訊地址／姓名）。',
         InvalidMobile: '請輸入正確的手機號碼（09 開頭 10 碼數字）。',
         InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
         MissingIdCard: '變更戶籍地址或姓名需上傳身分證正反面，請重新上傳後再送出。',
-        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。'
+        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
+        Cancelled: '已為您取消本次申請。'
     },
 
     // 發票資訊變更申請流程文案（節點以 C010 起編）
-    // OpenMarker 是 C010 回覆的固定文字，前端 invoice-info-change-form.js 監看聊天訊息比對到同一句就彈出表單；
-    // 兩邊各自維護同一組常數字串，改這裡要同步改前端的 OPEN_MARKER。
+    // FormFlag 對應前端 FormFlow.registerForm('InvoiceInfoChangeForm', ...) 註冊的 key，
+    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。
     InvoiceInfoChange: {
-        OpenMarker: '請於彈出視窗中填寫「發票資訊變更申請」表單。',
-        // 規格【功能說明】4. 紅字提示語：C010 進場時與 OpenMarker 一起回在對話裡（PM 已確認需在對話中顯示，不只是表單內文字）。
+        FormFlag: 'InvoiceInfoChangeForm',
+        // 規格【功能說明】4. 紅字提示語：C010 進場時回在對話裡（PM 已確認需在對話中顯示，不只是表單內文字）。
         ReminderNotice: '<span style="color:#e5484d;">申請內容請務必確認正確，以維護您的發票資訊，申請後已開立之發票七日內若需變更，請洽廠館櫃台。</span>',
         MissingSelection: '請擇一填寫發票資訊（統一編號或電子發票會員載具）。',
         InvalidUnified: '統一編號請輸入正確的 8 碼數字。',
         InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
-        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。'
+        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
+        Cancelled: '已為您取消本次申請。'
     }
 };
 
