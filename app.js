@@ -128,23 +128,6 @@ app.post('/PersonalDataChangeUpload', handleUpload(personalDataChangeUploadMgr, 
 app.post('/AgentUpload', handleUpload(agentUploadMgr, 'AgentUpload'));
 app.post('/LeaveUpload', handleUpload(leaveUploadMgr, 'LeaveUpload'));
 
-// 代理人流程的切結書/代理人證件/會員證件上傳：同樣非對話輪次，前端選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶。
-// TODO(PM 確認)：正式環境要把 Access-Control-Allow-Origin 收斂成實際的前端網域，不要留 '*'。
-app.post('/AgentUpload', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  agentArrayUpload(req, res, (err) => {
-    const chatId = (req.body && req.body.ask_chatId) || 'unknown';
-    const logger = new LoggerMgr('AgentUpload', chatId);
-    if (err) {
-      logger.AlertLog(`上傳失敗: ${err.message}`);
-      return res.status(400).json({ ok: false, message: err.message });
-    }
-    const files = buildAgentFileRefs(req.files);
-    logger.InfoLog(`上傳成功: ${JSON.stringify(files)}`);
-    res.json({ ok: true, files });
-  });
-});
-
 app.use((req, res, next) => next(createError(404)));
 app.use((err, req, res, next) => { res.status(err.status || 500).json({ error: err.message }); });
 
