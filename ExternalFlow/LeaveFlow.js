@@ -1,6 +1,8 @@
 const IntentBaseFlow = require('./IntentBaseFlow');
 const wording = require('../ExternalMethod/ExternalText');
 const AgentFlow = require('./AgentFlow');
+const LeaveApplicationApiMgr = require('../Api/LeaveApplicationApiMgr');
+const LeaveUploadMgr = require('../Api/LeaveUploadMgr');
 
 const T = wording.LeaveFlow;
 
@@ -41,20 +43,71 @@ class LeaveFlow extends IntentBaseFlow {
         return this.retryOrGiveUp(T.IdentityInvalid, 'C020', 'Text', T.IdentityAsk + this.buildButtons(T.IdentityButtons));
     }
 
-    // 本人送件：核實 → 打 ECP 建單號 → 回結果。
-    // TODO(你提供)：本人表單的欄位、核實規則、建單號要打的 ECP API 尚未確認；先接好結構（收表單→回完成），給我後補上。
+    // 本人送件：核實 → 打 ECP 建單號（CUS.StopMembership）→ 上傳證明文件 → 回結果。
     async C030_Self() {
         if (this.isCancelAction(this.askInput)) {
             this.logger.InfoLog(`[${this.FlowName}] C030_Self 使用者取消`);
             return this.reply({ message: T.Cancelled, isContinuum: '0' });
         }
         const form = this.parseFormInput(this.askInput);
-        if (!form || typeof form !== 'object') {
-            this.logger.AlertLog(`[${this.FlowName}] C030_Self 表單解析失敗`);
+        const valid = form && typeof form === 'object'
+            && (form.contactType === 'phone' || form.contactType === 'email')
+            && this.nonEmpty(form.contactValue)
+            && this.nonEmpty(form.reason)
+            && this.nonEmpty(String(form.months || ''))
+            && this.nonEmpty(form.startDate)
+            && Array.isArray(form.proof) && form.proof.length > 0;
+        if (!valid) {
+            this.logger.AlertLog(`[${this.FlowName}] C030_Self 表單核實未過`);
             return this.reply({ message: T.SelfInvalid, isContinuum: '0' });
         }
+
         this.logger.InfoLog(`[${this.FlowName}] C030_Self 收到表單: ${JSON.stringify(form)}`);
+        this.leaveForm = form;
+        await this.createLeaveOrder(form);
         return this.reply({ message: T.SelfDone, isContinuum: '0' });
+    }
+
+    // 寫入請假暫停申請案（CUS.StopMembership）+ 逐一上傳證明文件（建單號）。寫入失敗不中斷對話（使用者已填完），記 AlertLog。
+    async createLeaveOrder(form) {
+        try {
+            const { entityId } = await LeaveApplicationApiMgr.saveApplication({
+                memberNo: form.memberNo,
+                memberName: form.memberName,
+                applyDate: form.applyDate,
+                contactType: form.contactType,
+                contactValue: form.contactValue,
+                reason: form.reason,
+                months: form.months,
+                startDate: form.startDate,
+                logger: this.logger
+            });
+            this.orderNo = entityId;
+            if (!entityId) {
+                this.logger.AlertLog(`[${this.FlowName}] createLeaveOrder 未取得單號，略過附件上傳`);
+                return;
+            }
+            const refs = Array.isArray(form.proof) ? form.proof : [];
+            for (const ref of refs) {
+                if (!ref || !ref.fileId) continue;
+                const fileBuffer = LeaveUploadMgr.readFile(ref.fileId);
+                if (!fileBuffer || !fileBuffer.length) {
+                    this.logger.AlertLog(`[${this.FlowName}] 證明文件讀取失敗，略過上傳（fileId=${ref.fileId}）`);
+                    continue;
+                }
+                const uploaded = await LeaveApplicationApiMgr.uploadEntityAttachment({
+                    entityId,
+                    fileName: ref.fileName || ref.fileId,
+                    fileBuffer,
+                    contentType: LeaveUploadMgr.mimeFromExt(ref.fileName || ref.fileId),
+                    logger: this.logger
+                });
+                // 上傳到 ECP 成功才清暫存檔；失敗保留，方便之後補上傳或排查。
+                if (uploaded) LeaveUploadMgr.removeFile(ref.fileId, this.logger);
+            }
+        } catch (error) {
+            this.logger.AlertLog(`[${this.FlowName}] createLeaveOrder 失敗: ${error && error.stack ? error.stack : error}`);
+        }
     }
 
     // 代理人轉發節點：把每輪 askInput 轉給共用 AgentFlow 實例，直到其回 isContinuum:'0'。
@@ -66,7 +119,11 @@ class LeaveFlow extends IntentBaseFlow {
     }
 
     getState() {
-        return { role: this.role, ...(this.agentFlow ? this.agentFlow.getState() : {}) };
+        return {
+            role: this.role,
+            ...(this.role === 'SELF' ? { orderNo: this.orderNo } : {}),
+            ...(this.agentFlow ? this.agentFlow.getState() : {})
+        };
     }
 
     // 委派子流程用：帶入子流程建構所需原始欄位（FlowName 用 AgentFlow 自己的）。

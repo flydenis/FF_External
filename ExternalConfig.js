@@ -63,6 +63,13 @@ module.exports = {
         AllowedExt: ['.jpg', '.jpeg', '.png']
     },
 
+    // 會籍請假暫停申請的證明文件上傳限制，走獨立 /LeaveUpload 端點。
+    LeaveUpload: {
+        MaxFileSizeMB: 10,
+        MaxFileCount: 5,
+        AllowedExt: ['.jpg', '.jpeg', '.png']
+    },
+
     // 欠費查詢（共用，供任何「申請/送單」類流程進入時檢查；僅提示、不擋收單）。
     // TODO(PM 確認)：客戶欠費查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key）
     OverdueQuery: {
