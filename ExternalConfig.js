@@ -63,5 +63,13 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/overdue' },
         development: { Url: 'https://dev-host/api/member/overdue' },
         Qbi: { Url: './data/OverdueQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：FF-05-01 帳務查詢及繳款，客戶尚未提供 API 規格，Product/development 先放 placeholder，
+    // 目前 Mode 固定用 Qbi 讀本機 mock（見 data/PaymentHistoryQbiResponse.json），待客戶 API 到位後再補上實際網址與帶入欄位。
+    PaymentHistoryQuery: {
+        Product: { Url: 'https://prod-host/api/member/payment-history' },
+        development: { Url: 'https://dev-host/api/member/payment-history' },
+        Qbi: { Url: './data/PaymentHistoryQbiResponse.json' }
     }
 };

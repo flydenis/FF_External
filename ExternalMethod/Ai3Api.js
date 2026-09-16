@@ -4,6 +4,7 @@ const phoneApiMgr = require('../Api/PhoneApiMgr');
 const personalDataChangeApiMgr = require('../Api/PersonalDataChangeApiMgr');
 const invoiceInfoChangeApiMgr = require('../Api/InvoiceInfoChangeApiMgr');
 const overdueApiMgr = require('../Api/OverdueApiMgr');
+const paymentHistoryApiMgr = require('../Api/PaymentHistoryApiMgr');
 
 // 業務層 API 包裝：流程只呼叫這裡，實際 HTTP/交易由各 *ApiMgr 處理。
 // （ECP 對話紀錄走 Api/ChainseaApiMgr，由 BaseFlow 每輪寫入。）
@@ -34,6 +35,10 @@ class Ai3Api {
 
     queryOverdue(payload) {
         return overdueApiMgr.query(payload);
+    }
+
+    queryPaymentHistory(payload) {
+        return paymentHistoryApiMgr.query(payload);
     }
 }
 
