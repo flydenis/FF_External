@@ -96,5 +96,13 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/deduction-card' },
         development: { Url: 'https://dev-host/api/member/deduction-card' },
         Qbi: { Url: './data/DeductionCardQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：會籍合約資料查詢，客戶尚未提供 API 規格，Product/development 先放 placeholder，
+    // 目前 Mode 固定用 Qbi 讀本機 mock（見 data/ContractQbiResponse.json），待客戶 API 到位後再補上實際網址與帶入欄位。
+    ContractQuery: {
+        Product: { Url: 'https://prod-host/api/member/contract' },
+        development: { Url: 'https://dev-host/api/member/contract' },
+        Qbi: { Url: './data/ContractQbiResponse.json' }
     }
 };
