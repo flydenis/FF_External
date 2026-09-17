@@ -1,0 +1,19 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "applications": [
+                { "category": "個資變更", "acceptedDate": "2026-08-06", "status": "待處理" },
+                { "category": "發票變更", "acceptedDate": "2026-08-05", "status": "待處理" },
+                { "category": "扣款卡片變更", "acceptedDate": "2026-08-04", "status": "待處理" },
+                { "category": "暫停", "acceptedDate": "2026-08-02", "status": "待處理" },
+                { "category": "升等", "acceptedDate": "2026-07-30", "status": "待處理" }
+            ]
+        },
+        {
+            "key": "TEST0002",
+            "applications": []
+        }
+    ]
+}

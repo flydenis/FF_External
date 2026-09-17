@@ -104,5 +104,20 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/contract' },
         development: { Url: 'https://dev-host/api/member/contract' },
         Qbi: { Url: './data/ContractQbiResponse.json' }
+    },
+
+    // TODO(架構待確認)：ECP 待處理表單目前沒有單一端點可一次查到所有 CUS.* 類型（PM 已確認先用 Qbi mock 假設
+    // 已經整合好的結果，待客戶/架構確認真正的查詢機制後再調整）。
+    EcpPendingApplicationQuery: {
+        Product: { Url: 'https://prod-host/api/ecp/pending-applications' },
+        development: { Url: 'https://dev-host/api/ecp/pending-applications' },
+        Qbi: { Url: './data/EcpPendingApplicationQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：健身工廠會員系統各類別最近一筆申請，客戶尚未提供 API 規格，先用 Qbi mock。
+    MemberSystemApplicationQuery: {
+        Product: { Url: 'https://prod-host/api/ff/member-applications' },
+        development: { Url: 'https://dev-host/api/ff/member-applications' },
+        Qbi: { Url: './data/MemberSystemApplicationQbiResponse.json' }
     }
 };

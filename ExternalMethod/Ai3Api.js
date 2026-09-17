@@ -5,6 +5,8 @@ const personalDataChangeApiMgr = require('../Api/PersonalDataChangeApiMgr');
 const invoiceInfoChangeApiMgr = require('../Api/InvoiceInfoChangeApiMgr');
 const deductionCardChangeApiMgr = require('../Api/DeductionCardChangeApiMgr');
 const contractApiMgr = require('../Api/ContractApiMgr');
+const ecpPendingApplicationApiMgr = require('../Api/EcpPendingApplicationApiMgr');
+const memberSystemApplicationApiMgr = require('../Api/MemberSystemApplicationApiMgr');
 const overdueApiMgr = require('../Api/OverdueApiMgr');
 const paymentHistoryApiMgr = require('../Api/PaymentHistoryApiMgr');
 const paymentDueDateApiMgr = require('../Api/PaymentDueDateApiMgr');
@@ -47,6 +49,14 @@ class Ai3Api {
 
     queryContract(payload) {
         return contractApiMgr.query(payload);
+    }
+
+    queryEcpPendingApplications(payload) {
+        return ecpPendingApplicationApiMgr.query(payload);
+    }
+
+    queryMemberSystemApplications(payload) {
+        return memberSystemApplicationApiMgr.query(payload);
     }
 
     queryOverdue(payload) {
