@@ -4,6 +4,7 @@ const phoneApiMgr = require('../Api/PhoneApiMgr');
 const personalDataChangeApiMgr = require('../Api/PersonalDataChangeApiMgr');
 const invoiceInfoChangeApiMgr = require('../Api/InvoiceInfoChangeApiMgr');
 const deductionCardChangeApiMgr = require('../Api/DeductionCardChangeApiMgr');
+const contractApiMgr = require('../Api/ContractApiMgr');
 const overdueApiMgr = require('../Api/OverdueApiMgr');
 const paymentHistoryApiMgr = require('../Api/PaymentHistoryApiMgr');
 const paymentDueDateApiMgr = require('../Api/PaymentDueDateApiMgr');
@@ -42,6 +43,10 @@ class Ai3Api {
 
     uploadDeductionCardChangeAttachment(payload) {
         return deductionCardChangeApiMgr.uploadEntityAttachment(payload);
+    }
+
+    queryContract(payload) {
+        return contractApiMgr.query(payload);
     }
 
     queryOverdue(payload) {

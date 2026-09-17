@@ -361,6 +361,46 @@ var ExternalText = {
         Cancelled: '已為您取消本次申請。'
     },
 
+    // 會籍合約資料查詢流程文案（節點以 C010 起編，FF-04-00）。
+    // 規格【功能說明】：顯示最近兩筆合約（含到期／終止／轉讓），一次全部顯示（PM 已確認，不用像帳務查詢
+    // 先列清單選一筆）；行政終止合約的「合約狀態」欄位固定顯示提示語而非狀態字面值本身（規格【欄位說明】明列）。
+    // PM 已確認：此次先只做查詢本身，行政終止是否要回頭擋既有申辦/查詢流程待之後再議，不在本輪範圍。
+    Contract: {
+        Intro: '您的會籍合約（僅顯示最近兩筆，含到期／終止／轉讓）：',
+        NotFound: '無符合合約狀態資訊，若有相關問題請洽會員服務中心。',
+        AdminTerminationStatusText: '合約欠款，請洽會員服務中心',
+        AdminTerminationStatus: '行政終止',
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            Card: 'width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;'
+        },
+
+        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/ContractApiMgr 正規化後的資料。
+        buildCard(record) {
+            const s = ExternalText.Contract.CardStyle;
+            const period = `${record.startDate || ''} ～ ${record.endDate || ''}`;
+            const advisor = [record.advisorCode, record.advisorName].filter(Boolean).map((v, i) => i === 1 ? `（${v}）` : v).join('');
+            const statusText = record.contractStatus === ExternalText.Contract.AdminTerminationStatus
+                ? ExternalText.Contract.AdminTerminationStatusText
+                : (record.contractStatus || '');
+            return `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">會籍合約　${record.contractNo || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">合約起訖日</span><span style="${s.Value}">${period}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">會員卡別</span><span style="${s.Value}">${record.cardType || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">方案型態</span><span style="${s.Value}">${record.planType || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">可用分館</span><span style="${s.Value}">${record.availableStore || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">服務顧問</span><span style="${s.Value}">${advisor}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">合約狀態</span><span style="${s.Value}">${statusText}</span></div>` +
+                `</div>`;
+        }
+    },
+
     // 個人資料變更申請流程文案（節點以 C010 起編）
     // FormFlag 對應前端 FormFlow.registerForm('PersonalDataChangeForm', ...) 註冊的 key，
     // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。

@@ -1,0 +1,84 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "name": "丁大漢",
+            "contracts": [
+                {
+                    "contractNo": "CFM20250610150231093",
+                    "startDate": "2025-06-18",
+                    "endDate": "2026-08-17",
+                    "cardType": "銀卡",
+                    "planType": "附期限月繳型",
+                    "availableStore": "屏東潮州",
+                    "advisorCode": "A1203",
+                    "advisorName": "Kevin",
+                    "contractStatus": "已審核"
+                },
+                {
+                    "contractNo": "CFM20230115093244017",
+                    "startDate": "2023-01-20",
+                    "endDate": "2024-01-19",
+                    "cardType": "金卡",
+                    "planType": "預繳型",
+                    "availableStore": "台北健康廠",
+                    "advisorCode": "A1105",
+                    "advisorName": "Emma",
+                    "contractStatus": "到期"
+                }
+            ]
+        },
+        {
+            "key": "TEST0002",
+            "name": "王小美",
+            "contracts": [
+                {
+                    "contractNo": "CFM20240302110522581",
+                    "startDate": "2024-03-05",
+                    "endDate": "2025-03-04",
+                    "cardType": "鈦銀卡",
+                    "planType": "附期限月繳型",
+                    "availableStore": "台中大墩廠",
+                    "advisorCode": "A2201",
+                    "advisorName": "Lucas",
+                    "contractStatus": "行政終止"
+                }
+            ]
+        },
+        {
+            "key": "TEST0003",
+            "name": "陳阿明",
+            "contracts": [
+                {
+                    "contractNo": "CFM20250801083311204",
+                    "startDate": "2025-08-05",
+                    "endDate": "2026-08-04",
+                    "cardType": "白金卡",
+                    "planType": "附期限月繳型",
+                    "availableStore": "高雄鳳山廠",
+                    "advisorCode": "A3110",
+                    "advisorName": "Nina",
+                    "contractStatus": "請假"
+                }
+            ]
+        },
+        {
+            "key": "TEST0004",
+            "name": "李大同",
+            "contracts": [
+                {
+                    "contractNo": "CFM20220610150231093",
+                    "startDate": "2022-06-15",
+                    "endDate": "2023-06-14",
+                    "cardType": "銀卡",
+                    "planType": "附期限月繳型",
+                    "availableStore": "台北健康廠",
+                    "advisorCode": "A1203",
+                    "advisorName": "Kevin",
+                    "contractStatus": "轉讓"
+                }
+            ]
+        }
+    ]
+}
