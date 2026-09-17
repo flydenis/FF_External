@@ -1,0 +1,18 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "applications": [
+                { "category": "課程轉讓", "acceptedDate": "2026-08-01", "statusCode": "9" },
+                { "category": "課程終止", "acceptedDate": "2026-07-15", "statusCode": "2" },
+                { "category": "更換教練", "acceptedDate": "2026-06-20", "statusCode": "3" },
+                { "category": "課程轉讓", "acceptedDate": "2026-05-10", "statusCode": "1" }
+            ]
+        },
+        {
+            "key": "TEST0002",
+            "applications": []
+        }
+    ]
+}

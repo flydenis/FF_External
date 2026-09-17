@@ -1,0 +1,16 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "applications": [
+                { "category": "教練合約解約／取消", "acceptedDate": "2026-08-06", "status": "待處理" },
+                { "category": "教練課程轉讓", "acceptedDate": "2026-08-03", "status": "待處理" }
+            ]
+        },
+        {
+            "key": "TEST0002",
+            "applications": []
+        }
+    ]
+}

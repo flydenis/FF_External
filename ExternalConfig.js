@@ -119,5 +119,19 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/ff/member-applications' },
         development: { Url: 'https://dev-host/api/ff/member-applications' },
         Qbi: { Url: './data/MemberSystemApplicationQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：教練合約異動申辦進度（課程轉讓／課程終止／更換教練，會員系統這段），客戶尚未提供 API 規格，先用 Qbi mock。
+    CoachApplicationQuery: {
+        Product: { Url: 'https://prod-host/api/ff/coach-applications' },
+        development: { Url: 'https://dev-host/api/ff/coach-applications' },
+        Qbi: { Url: './data/CoachApplicationQbiResponse.json' }
+    },
+
+    // TODO(架構待確認)：教練版 ECP 待處理表單，跟 FF-06-01 會籍版一樣目前沒有單一端點可查，PM 已確認先用 Qbi mock。
+    CoachPendingApplicationQuery: {
+        Product: { Url: 'https://prod-host/api/ecp/coach-pending-applications' },
+        development: { Url: 'https://dev-host/api/ecp/coach-pending-applications' },
+        Qbi: { Url: './data/CoachPendingApplicationQbiResponse.json' }
     }
 };
