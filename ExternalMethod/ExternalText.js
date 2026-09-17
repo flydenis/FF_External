@@ -287,6 +287,58 @@ var ExternalText = {
         }
     },
 
+    // 扣款卡片資訊查詢流程文案（節點以 C010 起編）。
+    // PM 已確認：先只處理單一合約情境；卡片下方「前往扣款卡片變更」按鈕點擊後，
+    // 是送出一則固定文字訊息（ChangeButtonSubmit）讓平台依既有意圖設定重新路由，不在本流程內接下一步。
+    DeductionCard: {
+        Intro: '您現有及未來合約之扣款卡片：',
+        NotFound: '很抱歉，查無您的扣款卡片資訊！建議您洽詢客服人員或現場服務人員，由專人協助您進一步確認，謝謝！',
+        ChangeButtonLabel: '前往扣款卡片變更',
+        ChangeButtonSubmit: '扣款卡片變更',
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;'
+        },
+
+        // 「前往扣款卡片變更」導覽列樣式（比照 UI 稿：滿版金框白底、右側 chevron），
+        // 與一般 IntentBaseFlow.buildButtons 的圓角按鈕不同，故本流程獨立組 HTML，不共用 ButtonStyle。
+        ChangeButtonStyle: {
+            Container: 'margin-top:10px;',
+            Button: 'display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;padding:14px 16px;border-radius:12px;border:1px solid #f5c518;background:#ffffff;color:#1a1a1a;font-weight:600;font-size:14px;text-align:left;cursor:pointer;',
+            Chevron: 'color:#f5c518;font-size:16px;font-weight:700;margin-left:8px;'
+        },
+
+        // 組「前往扣款卡片變更」導覽列（點擊送出固定文字 ChangeButtonSubmit，見 DeductionCardQueryFlow 說明）。
+        buildChangeButton() {
+            const s = ExternalText.DeductionCard.ChangeButtonStyle;
+            return `<div style="${s.Container}">` +
+                `[link submit="${ExternalText.DeductionCard.ChangeButtonSubmit}"]` +
+                `<button style="${s.Button}"><span>${ExternalText.DeductionCard.ChangeButtonLabel}</span><span style="${s.Chevron}">›</span></button>` +
+                `[/link]</div>`;
+        },
+
+        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/DeductionCardApiMgr 正規化後的資料。
+        buildCard(record) {
+            const s = ExternalText.DeductionCard.CardStyle;
+            const feeText = `NT$${Number(record.monthlyFee || 0).toLocaleString()}`;
+            return `${ExternalText.DeductionCard.Intro}` +
+                `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">扣款卡片（合約 ${record.contractNo || ''}）</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">扣款月費</span><span style="${s.Value}">${feeText}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">每月扣款日</span><span style="${s.Value}">${record.dueDay || ''} 日</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">扣款銀行</span><span style="${s.Value}">${record.bankName || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">卡號末四碼</span><span style="${s.Value}">**** ${record.cardLastFour || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">有效年月</span><span style="${s.Value}">${record.validThru || ''}</span></div>` +
+                `</div>`;
+        }
+    },
+
     // 個人資料變更申請流程文案（節點以 C010 起編）
     // FormFlag 對應前端 FormFlow.registerForm('PersonalDataChangeForm', ...) 註冊的 key，
     // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。

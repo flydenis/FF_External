@@ -1,0 +1,23 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "contractNo": "C-0001",
+            "monthlyFee": 1299,
+            "dueDay": 6,
+            "bankName": "○○銀行",
+            "cardLastFour": "1234",
+            "validThru": "28/09"
+        },
+        {
+            "key": "TEST0002",
+            "contractNo": "C-0002",
+            "monthlyFee": 990,
+            "dueDay": 15,
+            "bankName": "××銀行",
+            "cardLastFour": "5678",
+            "validThru": "27/12"
+        }
+    ]
+}
