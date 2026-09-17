@@ -151,9 +151,10 @@ var ExternalText = {
     },
 
     // 帳務查詢及繳款流程文案（節點以 C010 起編，FF-05-01）。
-    // 規格【功能說明】：月繳型＋目前生效中（審核中/已審核/請假）才顯示近三個月繳費紀錄；
-    // 行政中止固定顯示 AdminHoldNote（不論帳款狀態）；其餘非生效中狀態顯示 OtherStatusNote；
-    // 預繳型不論狀態一律顯示 PrepaidNote（無按月繳費紀錄）。
+    // 規格書 20260915 版【摘要段落】：已結帳／到期／終止／請假／已審核／轉讓／行政中止 共 7 種合約狀態
+    // 都可查近三個月繳費紀錄（PM 2026-09-17 已確認以此摘要段落為準，非僅限「目前生效中」三種狀態）；
+    // 行政中止固定顯示 AdminHoldNote（不論帳款狀態）；預繳型不論狀態一律顯示 PrepaidNote（無按月繳費紀錄）；
+    // 不在上述 7 種狀態內者（如審核中）顯示 OtherStatusNote；在範圍內但近三個月無繳費紀錄顯示 EmptyRecordsNote。
     PaymentHistory: {
         Intro: '為您顯示當前生效的近三個月繳費紀錄：',
         NotFound: '很抱歉，查無您的合約帳務資訊！建議您洽詢客服人員或現場服務人員，由專人協助您進一步確認，謝謝！',
@@ -163,16 +164,19 @@ var ExternalText = {
         AdminHoldNote: '合約欠款，請洽會員服務中心。',
         OtherStatusNote: '請洽廠館櫃檯或會員服務中心。',
         PrepaidNote: '預繳型會籍，無相關按月繳費紀錄。',
+        EmptyRecordsNote: '三個月內無月費相關繳費紀錄。',
         FooterDisclaimer: '提醒您僅呈現近3筆，預繳型會員顯示「無按月繳費紀錄」。',
 
-        // 規格【功能目的】：帶入近三個月月費繳費狀態，僅限目前生效中的合約狀態。
-        ActiveStatuses: ['審核中', '已審核', '請假'],
+        // 規格【摘要段落】明列可查繳費紀錄的合約狀態（行政中止另有專屬分支，不重複列在此陣列）。
+        ActiveStatuses: ['已結帳', '到期', '終止', '請假', '已審核', '轉讓'],
         AdminHoldStatus: '行政中止',
         BillingTypeLabel: { monthly: '月繳型', prepaid: '預繳型' },
 
         // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        // Card 固定寬度：聊天氣泡容器（.ChatMessageContent）是 inline-block，寬度會依內容縮放，
+        // 6 欄表格跟純文字提示語混用時氣泡寬度會跳動，故此卡片改用固定寬度讓各種情境呈現一致大小。
         CardStyle: {
-            Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Card: 'width:350px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
             TitleRow: 'display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             TypeBadge: 'color:#f5a623;font-weight:600;font-size:13px;',
@@ -219,32 +223,36 @@ var ExternalText = {
             const typeLabel = P.BillingTypeLabel[contract.billingType] || contract.billingType || '';
 
             let body;
+            const records = (contract.paymentRecords || []).slice(0, 3);
             if (contract.contractStatus === P.AdminHoldStatus) {
                 body = `<div style="${s.Note}">${P.AdminHoldNote}</div>`;
             } else if (contract.billingType === 'prepaid') {
                 body = `<div style="${s.Note}">${P.PrepaidNote}</div>`;
             } else if (!P.ActiveStatuses.includes(contract.contractStatus)) {
                 body = `<div style="${s.Note}">${P.OtherStatusNote}</div>`;
+            } else if (!records.length) {
+                body = `<div style="${s.Note}">${P.EmptyRecordsNote}</div>`;
             } else {
                 const overdueNote = contract.overdue ? `<div style="${s.Note}">${P.OverdueReminder}</div>` : '';
-                const records = (contract.paymentRecords || []).slice(0, 3);
                 const cell = (text, isFirst) => `<span style="${isFirst ? s.RecordCell : s.RecordCellDivider}">${text}</span>`;
                 const rows = records.map((r, i) => {
                     const amountText = `NT$${Number(r.amount || 0).toLocaleString()}`;
                     const dateText = r.actualDeductDate ? P.mmdd(r.actualDeductDate) : '-';
-                    const refundText = r.refundDate ? `（已退款 ${P.mmdd(r.refundDate)}）` : '';
+                    const refundText = r.refundDate ? P.mmdd(r.refundDate) : '-';
                     const rowStyle = i === records.length - 1 ? s.RecordRowLast : s.RecordRow;
                     return `<div style="${rowStyle}">` +
-                        cell(r.feeMonth || '', true) +
+                        cell(r.seq != null ? r.seq : i + 1, true) +
+                        cell(r.feeMonth || '', false) +
                         cell(amountText, false) +
-                        cell(`${r.status || ''}${refundText}`, false) +
+                        cell(r.status || '', false) +
                         cell(dateText, false) +
+                        cell(refundText, false) +
                         `</div>`;
                 }).join('');
                 body = overdueNote +
                     `<div style="${s.SectionTitle}">近三個月繳費紀錄</div>` +
                     `<div style="${s.RecordTable}">` +
-                    `<div style="${s.RecordHeaderRow}">${cell('費用月份', true)}${cell('金額', false)}${cell('扣款狀態', false)}${cell('實際扣款日', false)}</div>` +
+                    `<div style="${s.RecordHeaderRow}">${cell('序號', true)}${cell('費用月份', false)}${cell('費用金額', false)}${cell('扣繳狀態', false)}${cell('實際扣繳日期', false)}${cell('退款日期', false)}</div>` +
                     rows +
                     `</div>`;
             }
