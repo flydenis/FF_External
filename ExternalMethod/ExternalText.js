@@ -406,8 +406,8 @@ var ExternalText = {
     // ECP 待處理查詢目前沒有真正的單一端點（PM 已確認先用 Qbi mock 假設已整合好的 5 筆結果）。
     ApplicationProgress: {
         Intro: '為您查詢申辦進度（同一問題、兩層答案），每層可左右滑動：',
-        Tier1Title: '第一層：線上表單處理（ECP，上限 10 張）',
-        Tier2Title: '第二層：各類別一年內最近一筆（會員系統，最多 9 類）',
+        Tier1Title: '第一層：線上表單處理',
+        Tier2Title: '第二層：各類別一年內最近一筆',
         NotFound: '無相關申請紀錄。',
 
         // 規格【欄位說明】九類申請類別，ECP 待處理／會員系統兩段共用同一組類別名稱。
@@ -451,6 +451,20 @@ var ExternalText = {
             const cards = records.map(r => ExternalText.ApplicationProgress.buildCard(r, statusTextFn(r))).join('');
             return `<div style="${s.SectionTitle}">${title}</div><div style="${s.Row}">${cards}</div>`;
         }
+    },
+
+    // 教練合約異動申辦進度查詢文案（節點以 C010 起編，FF-07-01 子項 2）。
+    // PM 已確認這次只做 FF-07-01 的「申辦進度查詢」子功能，合約 7 欄查詢／帳務繳費紀錄／上課紀錄 PDF 先不做。
+    // PM 已確認：教練版跟會籍版（FF-06-01）結構一致，也是兩段——第一段 ECP 待處理（不分類，上限 10 筆）、
+    // 第二段健身工廠會員系統各類別最近一筆（課程轉讓／課程終止／更換教練，最多 10 筆，同類別可重複出現，
+    // 不像會籍版每類別只取最新一筆）；狀態代碼轉換沿用 ApplicationProgress.MemberSystemStatusLabel
+    // （規格【操作邏輯】會籍與教練共用同一套代碼），CardStyle／buildCard／buildSection 也直接沿用，不重複定義。
+    CoachApplicationProgress: {
+        Intro: '為您查詢申辦進度（同一問題、兩層答案），每層可左右滑動：',
+        Tier1Title: '第一層：線上表單處理',
+        Tier2Title: '第二層：各類別最近一筆',
+        NotFound: '無相關申請紀錄。',
+        CategoryLabels: ['課程轉讓', '課程終止', '更換教練']
     },
 
     // 個人資料變更申請流程文案（節點以 C010 起編）
