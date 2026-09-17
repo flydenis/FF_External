@@ -80,5 +80,14 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/payment-due-date' },
         development: { Url: 'https://dev-host/api/member/payment-due-date' },
         Qbi: { Url: './data/PaymentDueDateQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：扣款卡片資訊查詢，客戶尚未提供 API 規格，Product/development 先放 placeholder，
+    // 目前 Mode 固定用 Qbi 讀本機 mock（見 data/DeductionCardQbiResponse.json），待客戶 API 到位後再補上實際網址與帶入欄位。
+    // 先只處理單一合約情境（PM 已確認），多合約情境待之後有需求再補。
+    DeductionCardQuery: {
+        Product: { Url: 'https://prod-host/api/member/deduction-card' },
+        development: { Url: 'https://dev-host/api/member/deduction-card' },
+        Qbi: { Url: './data/DeductionCardQbiResponse.json' }
     }
 };
