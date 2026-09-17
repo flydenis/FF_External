@@ -401,6 +401,58 @@ var ExternalText = {
         }
     },
 
+    // 合約異動申辦進度查詢流程文案（節點以 C010 起編，FF-06-01）。
+    // PM 已確認本輪只做會籍版（9 類，教練版類別屬於 FF-07-01 留待之後）；
+    // ECP 待處理查詢目前沒有真正的單一端點（PM 已確認先用 Qbi mock 假設已整合好的 5 筆結果）。
+    ApplicationProgress: {
+        Intro: '為您查詢申辦進度（同一問題、兩層答案），每層可左右滑動：',
+        Tier1Title: '第一層：線上表單處理（ECP，上限 10 張）',
+        Tier2Title: '第二層：各類別一年內最近一筆（會員系統，最多 9 類）',
+        NotFound: '無相關申請紀錄。',
+
+        // 規格【欄位說明】九類申請類別，ECP 待處理／會員系統兩段共用同一組類別名稱。
+        CategoryLabels: ['暫停', '延展', '提前開啟請假', '升等', '轉館', '轉館加升等', '個資變更', '發票變更', '扣款卡片變更'],
+
+        // 規格【操作邏輯】會員系統狀態代碼轉換（會籍與教練一致）。
+        MemberSystemStatusLabel: {
+            '1': '案件審理中',
+            '2': '待結帳尚未送件',
+            '4': '未結帳已失效',
+            '9': '受理成功',
+            '3': '取消申請'
+        },
+
+        // 卡片外觀樣式：橫向捲動列＋固定寬度卡片，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            SectionTitle: 'font-weight:700;font-size:14px;color:#1a1a1a;border-left:4px solid #f5c518;padding-left:8px;margin-top:14px;',
+            Row: 'display:flex;overflow-x:auto;gap:8px;padding:8px 2px;-webkit-overflow-scrolling:touch;',
+            Card: 'flex:0 0 auto;width:170px;box-sizing:border-box;background:#ffffff;border:1px solid #eee;border-radius:12px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Title: 'font-weight:700;font-size:13px;color:#1a1a1a;padding-bottom:8px;border-bottom:2px solid #f5c518;margin-bottom:8px;',
+            FieldLabel: 'color:#8a8a8a;font-size:12px;margin-top:8px;',
+            FieldLabelFirst: 'color:#8a8a8a;font-size:12px;',
+            FieldValue: 'color:#1a1a1a;font-weight:600;font-size:13px;margin-top:2px;'
+        },
+
+        // 依單筆申請紀錄組一張卡片。statusText 由呼叫端先轉換好帶入（ECP 待處理段是字面值，
+        // 會員系統段要先查 MemberSystemStatusLabel），本函式不管兩段的轉換規則差異。
+        buildCard(record, statusText) {
+            const s = ExternalText.ApplicationProgress.CardStyle;
+            return `<div style="${s.Card}">` +
+                `<div style="${s.Title}">${record.category || ''}</div>` +
+                `<div style="${s.FieldLabelFirst}">受理日期</div><div style="${s.FieldValue}">${record.acceptedDate || '-'}</div>` +
+                `<div style="${s.FieldLabel}">狀態</div><div style="${s.FieldValue}">${statusText || '-'}</div>` +
+                `</div>`;
+        },
+
+        // 組一整段（標題＋橫向捲動卡片列）。records 為空陣列時回傳空字串，由呼叫端決定是否要整段省略。
+        buildSection(title, records, statusTextFn) {
+            const s = ExternalText.ApplicationProgress.CardStyle;
+            if (!records || !records.length) return '';
+            const cards = records.map(r => ExternalText.ApplicationProgress.buildCard(r, statusTextFn(r))).join('');
+            return `<div style="${s.SectionTitle}">${title}</div><div style="${s.Row}">${cards}</div>`;
+        }
+    },
+
     // 個人資料變更申請流程文案（節點以 C010 起編）
     // FormFlag 對應前端 FormFlow.registerForm('PersonalDataChangeForm', ...) 註冊的 key，
     // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。

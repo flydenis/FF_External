@@ -25,6 +25,7 @@ const DeductionCardQueryFlow = require('./ExternalFlow/DeductionCardQueryFlow');
 const DeductionCardChangeFlow = require('./ExternalFlow/DeductionCardChangeFlow');
 const deductionCardChangeUploadMgr = require('./Api/DeductionCardChangeUploadMgr');
 const ContractQueryFlow = require('./ExternalFlow/ContractQueryFlow');
+const ApplicationProgressQueryFlow = require('./ExternalFlow/ApplicationProgressQueryFlow');
 const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
 const { arrayUpload: agentArrayUpload, buildFileRefs: buildAgentFileRefs } = require('./Api/AgentUploadMgr');
 
@@ -110,6 +111,7 @@ app.post('/PaymentDueDateQueryFlow', (req, res) => runFlow({ req, res, FlowClass
 app.post('/DeductionCardQueryFlow', (req, res) => runFlow({ req, res, FlowClass: DeductionCardQueryFlow, flowName: 'DeductionCardQueryFlow' }));
 app.post('/DeductionCardChangeFlow', (req, res) => runFlow({ req, res, FlowClass: DeductionCardChangeFlow, flowName: 'DeductionCardChangeFlow' }));
 app.post('/ContractQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ContractQueryFlow, flowName: 'ContractQueryFlow' }));
+app.post('/ApplicationProgressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ApplicationProgressQueryFlow, flowName: 'ApplicationProgressQueryFlow' }));
 
 // 各流程的檔案上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶（不經 ask_input，
 // 避免撞到 ECP 對話引擎自己的 FOriginArgs 欄位長度限制）。三支路由共用同一套 handleUpload 處理邏輯，
