@@ -57,6 +57,13 @@ module.exports = {
         AllowedExt: ['.jpg', '.jpeg', '.png']
     },
 
+    // 扣款卡片變更申請的信用卡授權書上傳限制（單檔，僅 jpg/png/jpeg），走獨立 /DeductionCardChangeUpload 端點。
+    DeductionCardChangeUpload: {
+        MaxFileSizeMB: 10,
+        MaxFileCount: 1,
+        AllowedExt: ['.jpg', '.jpeg', '.png']
+    },
+
     // 欠費查詢（共用，供任何「申請/送單」類流程進入時檢查；僅提示、不擋收單）。
     // TODO(PM 確認)：客戶欠費查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key）
     OverdueQuery: {
