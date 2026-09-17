@@ -13,9 +13,68 @@
                     "contractStatus": "已審核",
                     "overdue": false,
                     "paymentRecords": [
-                        { "seq": 1, "feeMonth": "2026-06", "amount": 1299, "status": "已扣款", "actualDeductDate": "2026-06-06", "refundDate": "" },
-                        { "seq": 2, "feeMonth": "2026-05", "amount": 1299, "status": "已扣款", "actualDeductDate": "2026-05-06", "refundDate": "" },
-                        { "seq": 3, "feeMonth": "2026-04", "amount": 1299, "status": "已扣款", "actualDeductDate": "2026-04-06", "refundDate": "" }
+                        { "seq": 1, "feeMonth": "2026-06", "amount": 1299, "status": "已繳", "actualDeductDate": "2026-06-06", "refundDate": "" },
+                        { "seq": 2, "feeMonth": "2026-05", "amount": 1299, "status": "已繳", "actualDeductDate": "2026-05-06", "refundDate": "" },
+                        { "seq": 3, "feeMonth": "2026-04", "amount": 1299, "status": "已繳", "actualDeductDate": "2026-04-06", "refundDate": "" }
+                    ]
+                },
+                {
+                    "contractNo": "C-0009",
+                    "startDate": "2026-08-01",
+                    "endDate": "2027-07-31",
+                    "billingType": "monthly",
+                    "contractStatus": "已審核",
+                    "overdue": true,
+                    "paymentRecords": [
+                        { "seq": 1, "feeMonth": "2026-08", "amount": 1599, "status": "未繳", "actualDeductDate": "", "refundDate": "" },
+                        { "seq": 2, "feeMonth": "2026-07", "amount": 1599, "status": "已繳", "actualDeductDate": "2026-07-06", "refundDate": "" }
+                    ]
+                },
+                {
+                    "contractNo": "C-0010",
+                    "startDate": "2024-06-01",
+                    "endDate": "2025-05-31",
+                    "billingType": "monthly",
+                    "contractStatus": "行政中止",
+                    "overdue": true,
+                    "paymentRecords": []
+                },
+                {
+                    "contractNo": "C-0011",
+                    "startDate": "2023-01-01",
+                    "endDate": "2027-12-31",
+                    "billingType": "prepaid",
+                    "contractStatus": "已審核",
+                    "overdue": false,
+                    "paymentRecords": []
+                },
+                {
+                    "contractNo": "C-0012",
+                    "startDate": "2026-09-01",
+                    "endDate": "2027-08-31",
+                    "billingType": "monthly",
+                    "contractStatus": "審核中",
+                    "overdue": false,
+                    "paymentRecords": []
+                },
+                {
+                    "contractNo": "C-0013",
+                    "startDate": "2025-05-01",
+                    "endDate": "2026-04-30",
+                    "billingType": "monthly",
+                    "contractStatus": "已審核",
+                    "overdue": false,
+                    "paymentRecords": []
+                },
+                {
+                    "contractNo": "C-0014",
+                    "startDate": "2023-05-01",
+                    "endDate": "2024-04-30",
+                    "billingType": "monthly",
+                    "contractStatus": "到期",
+                    "overdue": false,
+                    "paymentRecords": [
+                        { "seq": 1, "feeMonth": "2024-04", "amount": 1199, "status": "已繳", "actualDeductDate": "2024-04-06", "refundDate": "" }
                     ]
                 }
             ]
@@ -32,9 +91,9 @@
                     "contractStatus": "已審核",
                     "overdue": true,
                     "paymentRecords": [
-                        { "seq": 1, "feeMonth": "2026-06", "amount": 1499, "status": "扣款失敗", "actualDeductDate": "", "refundDate": "" },
-                        { "seq": 2, "feeMonth": "2026-05", "amount": 1499, "status": "已扣款", "actualDeductDate": "2026-05-06", "refundDate": "" },
-                        { "seq": 3, "feeMonth": "2026-04", "amount": 1499, "status": "已扣款", "actualDeductDate": "2026-04-06", "refundDate": "" }
+                        { "seq": 1, "feeMonth": "2026-06", "amount": 1499, "status": "未繳", "actualDeductDate": "", "refundDate": "" },
+                        { "seq": 2, "feeMonth": "2026-05", "amount": 1499, "status": "已繳", "actualDeductDate": "2026-05-06", "refundDate": "" },
+                        { "seq": 3, "feeMonth": "2026-04", "amount": 1499, "status": "已繳", "actualDeductDate": "2026-04-06", "refundDate": "" }
                     ]
                 }
             ]
@@ -81,7 +140,7 @@
                     "contractStatus": "到期",
                     "overdue": false,
                     "paymentRecords": [
-                        { "seq": 1, "feeMonth": "2024-12", "amount": 1299, "status": "已扣款", "actualDeductDate": "2024-12-06", "refundDate": "" }
+                        { "seq": 1, "feeMonth": "2024-12", "amount": 1299, "status": "已繳", "actualDeductDate": "2024-12-06", "refundDate": "" }
                     ]
                 }
             ]
@@ -98,9 +157,9 @@
                     "contractStatus": "已審核",
                     "overdue": false,
                     "paymentRecords": [
-                        { "seq": 1, "feeMonth": "2026-06", "amount": 1299, "status": "已扣款", "actualDeductDate": "2026-06-06", "refundDate": "" },
-                        { "seq": 2, "feeMonth": "2026-05", "amount": 1299, "status": "已扣款", "actualDeductDate": "2026-05-06", "refundDate": "" },
-                        { "seq": 3, "feeMonth": "2026-04", "amount": 1299, "status": "已扣款", "actualDeductDate": "2026-04-06", "refundDate": "" }
+                        { "seq": 1, "feeMonth": "2026-06", "amount": 1299, "status": "已繳", "actualDeductDate": "2026-06-06", "refundDate": "" },
+                        { "seq": 2, "feeMonth": "2026-05", "amount": 1299, "status": "已繳", "actualDeductDate": "2026-05-06", "refundDate": "2026-05-10" },
+                        { "seq": 3, "feeMonth": "2026-04", "amount": 1299, "status": "已繳", "actualDeductDate": "2026-04-06", "refundDate": "" }
                     ]
                 },
                 {
@@ -111,8 +170,23 @@
                     "contractStatus": "審核中",
                     "overdue": false,
                     "paymentRecords": [
-                        { "seq": 1, "feeMonth": "2026-08", "amount": 1399, "status": "已扣款", "actualDeductDate": "2026-08-06", "refundDate": "2026-08-10" }
+                        { "seq": 1, "feeMonth": "2026-08", "amount": 1399, "status": "已繳", "actualDeductDate": "2026-08-06", "refundDate": "2026-08-10" }
                     ]
+                }
+            ]
+        },
+        {
+            "key": "TEST0007",
+            "name": "洪先生",
+            "contracts": [
+                {
+                    "contractNo": "C-0008",
+                    "startDate": "2026-09-01",
+                    "endDate": "2027-08-31",
+                    "billingType": "monthly",
+                    "contractStatus": "已審核",
+                    "overdue": false,
+                    "paymentRecords": []
                 }
             ]
         }
