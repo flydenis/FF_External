@@ -28,6 +28,28 @@ class IntentBaseFlow extends BaseFlow {
         return `<div style="${bs.ContainerStyle || ''}">${items}</div>`;
     }
 
+    // 組 Web 卡片訊息（給 reply({ messageType: 'Cards', message: this.buildCards(cards) })）。卡片僅 Web，Phone 由 JsonTemplate.getCards 退化成純文字。
+    // cards: [{ title, subTitle, imageUrl, imageClickUrl, buttons:[{ text, action, value, code, display }] }]
+    // 按鈕 action：'option'（送指令，值＝value）/ 'url'（開網址，值＝value）/ 'qa'（觸發問答，code＝keyId JSON）。
+    buildCards(cards, { imageAspectRatio = 'rectangle' } = {}) {
+        const actionMap = { option: 'Option', url: 'Url', qa: 'QA' };
+        const mapBtn = b => ({
+            Option: actionMap[b.action] || 'Option',
+            FName: b.value || '',
+            FShowText: b.text || '',
+            FDisplayText: b.display || '',
+            FCode: b.code || b.value || ''
+        });
+        const FQACardColumn = (cards || []).map(c => ({
+            thumbnailImageUrl: c.imageUrl || '',
+            imageClickUrl: c.imageClickUrl || '',
+            title: c.title || '',
+            FMsgAnswer: c.subTitle || '',
+            FQACardAnswer: (c.buttons || []).map(mapBtn)
+        }));
+        return { imageAspectRatio, FQACardColumn };
+    }
+
     // 以下為表單頁共用的小工具，供各流程節點共用，避免各自抄一份。
 
     isCancelAction(input) {

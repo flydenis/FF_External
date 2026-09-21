@@ -19,6 +19,9 @@ const personalDataChangeUploadMgr = require('./Api/PersonalDataChangeUploadMgr')
 const agentUploadMgr = require('./Api/AgentUploadMgr');
 const leaveUploadMgr = require('./Api/LeaveUploadMgr');
 const InvoiceInfoChangeFlow = require('./ExternalFlow/InvoiceInfoChangeFlow');
+const CoachContractTerminationFlow = require('./ExternalFlow/CoachContractTerminationFlow');
+const LockerQueryFlow = require('./ExternalFlow/LockerQueryFlow');
+const MembershipTerminationFlow = require('./ExternalFlow/MembershipTerminationFlow');
 const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
 const { arrayUpload: agentArrayUpload, buildFileRefs: buildAgentFileRefs } = require('./Api/AgentUploadMgr');
 
@@ -99,6 +102,9 @@ app.post('/ContactAddressQueryFlow', (req, res) => runFlow({ req, res, FlowClass
 app.post('/PhoneQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PhoneQueryFlow, flowName: 'PhoneQueryFlow' }));
 app.post('/PersonalDataChangeFlow', (req, res) => runFlow({ req, res, FlowClass: PersonalDataChangeFlow, flowName: 'PersonalDataChangeFlow' }));
 app.post('/InvoiceInfoChangeFlow', (req, res) => runFlow({ req, res, FlowClass: InvoiceInfoChangeFlow, flowName: 'InvoiceInfoChangeFlow' }));
+app.post('/CoachContractTerminationFlow', (req, res) => runFlow({ req, res, FlowClass: CoachContractTerminationFlow, flowName: 'CoachContractTerminationFlow' }));
+app.post('/LockerQueryFlow', (req, res) => runFlow({ req, res, FlowClass: LockerQueryFlow, flowName: 'LockerQueryFlow' }));
+app.post('/MembershipTerminationFlow', (req, res) => runFlow({ req, res, FlowClass: MembershipTerminationFlow, flowName: 'MembershipTerminationFlow' }));
 
 // 各流程的檔案上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶（不經 ask_input，
 // 避免撞到 ECP 對話引擎自己的 FOriginArgs 欄位長度限制）。三支路由共用同一套 handleUpload 處理邏輯，

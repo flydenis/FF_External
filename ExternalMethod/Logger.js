@@ -1,7 +1,6 @@
 const log4js = require('log4js');
 const log_config = require('../log_config.json');
 log4js.configure(log_config);
-const ExternalConfig = require('../ExternalConfig');
 
 // 防 Log Forging / Log Injection（CWE-117）：所有 log 出口都先中和換行與控制字元，
 // 使用者輸入就無法用換行偽造 log 行。內容不變、僅把 C0 控制碼/DEL 換成空白（Fortify 認得的單一 cleanse 出口）。
@@ -24,12 +23,12 @@ class Logger {
     }
     InfoLog(log) {
         const safe = sanitizeForLog(log);
-        if (ExternalConfig.Mode === 'development') console.log('[Info]', safe);
+        console.log('[Info]', safe);
         this.logger.info(safe);
     }
     AlertLog(log) {
         const safe = sanitizeForLog(log);
-        if (ExternalConfig.Mode === 'development') console.log('[Alert]', safe);
+        console.log('[Alert]', safe);
         this.logger.error(safe);
     }
     ErrorLog(log) { this.AlertLog(log); }

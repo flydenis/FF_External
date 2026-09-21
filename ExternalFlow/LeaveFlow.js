@@ -7,17 +7,33 @@ const LeaveUploadMgr = require('../Api/LeaveUploadMgr');
 const T = wording.LeaveFlow;
 
 // 請假（會籍暫停/延展）流程 — 純 Web 表單式。
-//   C010 問身分（本人/代理人 HTML 按鈕）→ C020 分派：
-//     本人  → 回 SelfForm 旗標，C030_Self 收表單送件。
-//     代理人 → 交給共用 AgentFlow 處理到底（見 AgentFlow.js），C030_Agent 每輪轉發 askInput，直到子流程結束。
+//   C010 問請假方式（會籍暫停/會籍延展 HTML 按鈕）→ C015 問身分（本人/代理人）→ C020 分派：
+//     本人  → 暫停回 SelfForm 旗標（C030_Self）；延展回 ExtensionForm 旗標（C030_ExtensionSelf）。
+//     代理人 → 不論暫停/延展皆交給共用 AgentFlow 處理到底（見 AgentFlow.js），C030_Agent 每輪轉發 askInput，直到子流程結束。
 class LeaveFlow extends IntentBaseFlow {
     async C010() {
         this.errorCount = 0;
         return this.reply({
-            message: T.IdentityAsk + this.buildButtons(T.IdentityButtons),
+            message: T.StopTypeAsk + this.buildButtons(T.StopTypeButtons),
             messageType: 'Text',
-            nextStep: 'C020'
+            nextStep: 'C015'
         });
+    }
+
+    async C015() {
+        const code = this.parseButtonCode(this.askInput, T.StopTypeButtons);
+        this.logger.InfoLog(`[${this.FlowName}] C015 請假方式=${code || '(未對到)'}`);
+
+        if (code === 'PAUSE' || code === 'EXTEND') {
+            this.errorCount = 0;
+            this.stopType = code;
+            return this.reply({
+                message: T.IdentityAsk + this.buildButtons(T.IdentityButtons),
+                messageType: 'Text',
+                nextStep: 'C020'
+            });
+        }
+        return this.retryOrGiveUp(T.StopTypeInvalid, 'C015', 'Text', T.StopTypeAsk + this.buildButtons(T.StopTypeButtons));
     }
 
     async C020() {
@@ -27,7 +43,10 @@ class LeaveFlow extends IntentBaseFlow {
         if (code === 'SELF') {
             this.errorCount = 0;
             this.role = 'SELF';
-            // 觸發前端自繪本人表單：只回旗標，message 空、isContinuum '1' 續談。
+            // 觸發前端自繪對應表單：只回旗標，message 空、isContinuum '1' 續談。
+            if (this.stopType === 'EXTEND') {
+                return this.reply({ message: '', parameters: { [T.ExtensionFormFlag]: T.ExtensionFormFlag }, nextStep: 'C030_ExtensionSelf' });
+            }
             return this.reply({ message: '', parameters: { [T.SelfFormFlag]: T.SelfFormFlag }, nextStep: 'C030_Self' });
         }
         if (code === 'AGENT') {
@@ -68,6 +87,28 @@ class LeaveFlow extends IntentBaseFlow {
         return this.reply({ message: T.SelfDone, isContinuum: '0' });
     }
 
+    // 本人送件（會籍延展）：核實 → 打 ECP 建單號（CUS.StopMembership，免附件）→ 回結果。
+    async C030_ExtensionSelf() {
+        if (this.isCancelAction(this.askInput)) {
+            this.logger.InfoLog(`[${this.FlowName}] C030_ExtensionSelf 使用者取消`);
+            return this.reply({ message: T.Cancelled, isContinuum: '0' });
+        }
+        const form = this.parseFormInput(this.askInput);
+        const valid = form && typeof form === 'object'
+            && this.nonEmpty(String(form.months || ''))
+            && this.nonEmpty(form.startDate)
+            && this.nonEmpty(form.payType);
+        if (!valid) {
+            this.logger.AlertLog(`[${this.FlowName}] C030_ExtensionSelf 表單核實未過`);
+            return this.reply({ message: T.ExtensionInvalid, isContinuum: '0' });
+        }
+
+        this.logger.InfoLog(`[${this.FlowName}] C030_ExtensionSelf 收到表單: ${JSON.stringify(form)}`);
+        this.extensionForm = form;
+        await this.createExtensionOrder(form);
+        return this.reply({ message: T.ExtensionDone, isContinuum: '0' });
+    }
+
     // 寫入請假暫停申請案（CUS.StopMembership）+ 逐一上傳證明文件（建單號）。寫入失敗不中斷對話（使用者已填完），記 AlertLog。
     async createLeaveOrder(form) {
         try {
@@ -80,6 +121,7 @@ class LeaveFlow extends IntentBaseFlow {
                 reason: form.reason,
                 months: form.months,
                 startDate: form.startDate,
+                membershipStop: T.MembershipStopCode.Pause,
                 logger: this.logger
             });
             this.orderNo = entityId;
@@ -110,6 +152,29 @@ class LeaveFlow extends IntentBaseFlow {
         }
     }
 
+    // 寫入會籍延展申請案（CUS.StopMembership，U_MembershipStop=E）。延展免附件，建單即完成。
+    async createExtensionOrder(form) {
+        try {
+            const { entityId } = await LeaveApplicationApiMgr.saveApplication({
+                memberNo: form.memberNo,
+                memberName: form.memberName,
+                applyDate: form.applyDate,
+                months: form.months,
+                startDate: form.startDate,
+                payType: form.payType,
+                fee: form.amount,
+                membershipStop: T.MembershipStopCode.Extend,
+                logger: this.logger
+            });
+            this.orderNo = entityId;
+            if (!entityId) {
+                this.logger.AlertLog(`[${this.FlowName}] createExtensionOrder 未取得單號`);
+            }
+        } catch (error) {
+            this.logger.AlertLog(`[${this.FlowName}] createExtensionOrder 失敗: ${error && error.stack ? error.stack : error}`);
+        }
+    }
+
     // 代理人轉發節點：把每輪 askInput 轉給共用 AgentFlow 實例，直到其回 isContinuum:'0'。
     async C030_Agent() {
         this.agentFlow.askInput = this.askInput;
@@ -120,6 +185,7 @@ class LeaveFlow extends IntentBaseFlow {
 
     getState() {
         return {
+            stopType: this.stopType,
             role: this.role,
             ...(this.role === 'SELF' ? { orderNo: this.orderNo } : {}),
             ...(this.agentFlow ? this.agentFlow.getState() : {})

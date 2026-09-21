@@ -9,13 +9,15 @@ const mgr = createEcpApplicationMgr({
 });
 
 class LeaveApplicationApiMgr {
-    // 新增一筆請假暫停申請案。fields 只帶實際蒐集到的欄位（未蒐集的欄位不送，維持資料表預設值）。
-    // 回傳 { entityId }：entityId 取自回應 entityIds[0]，供後續證明文件上傳時帶入。
+    // 新增一筆請假暫停/延展申請案。fields 只帶實際蒐集到的欄位（未蒐集的欄位不送，維持資料表預設值）。
+    // 回傳 { entityId }：entityId 取自回應 entityIds[0]，供後續證明文件上傳時帶入（延展無附件則用不到）。
     // 欄位對應（PM 已確認）：
     //   會員編號 -> U_MemberCode、姓名 -> FName、申請日期 -> FCreateTime
     //   聯絡方式：手機 -> U_ContactPhone；Email -> U_ContactEmail（依 contactType 擇一寫入，另一個不送）
     //   暫停原因 -> U_StopReason、暫停月數 -> U_StopMonths（只送數字，如 1，不帶「個月」）、暫停起始日 -> U_StopActDate
-    async saveApplication({ memberNo, memberName, applyDate, contactType, contactValue, reason, months, startDate, logger }) {
+    //   會籍暫停(請假/延展) -> U_MembershipStop（請假 S、展延 E，見 ExternalText.LeaveFlow.MembershipStopCode）
+    //   繳費方式 -> U_PayType（信用卡 C、轉帳 T，由前端表單直接送代碼）、延展費用 -> U_ExtensionFee
+    async saveApplication({ memberNo, memberName, applyDate, contactType, contactValue, reason, months, startDate, membershipStop, payType, fee, logger }) {
         const record = {};
         if (memberNo !== undefined) record.U_MemberCode = memberNo;
         if (memberName !== undefined) record.FName = memberName;
@@ -27,6 +29,9 @@ class LeaveApplicationApiMgr {
         if (reason !== undefined) record.U_StopReason = reason;
         if (months !== undefined) record.U_StopMonths = Number(months);
         if (startDate !== undefined) record.U_StopActDate = startDate;
+        if (membershipStop !== undefined) record.U_MembershipStop = membershipStop;
+        if (payType !== undefined) record.U_PayType = payType;
+        if (fee !== undefined) record.U_ExtensionFee = Number(fee);
         return mgr.saveApplication(record, logger);
     }
 

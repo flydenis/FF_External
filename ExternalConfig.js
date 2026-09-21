@@ -70,6 +70,14 @@ module.exports = {
         AllowedExt: ['.jpg', '.jpeg', '.png']
     },
 
+    // TODO(PM 確認)：客戶鞋櫃租賃資訊查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key）；
+    // 目前尚無正式 API 可串，先以 Qbi 模式讀本機假資料展示效果。
+    LockerQuery: {
+        Product: { Url: 'https://prod-host/api/member/locker-rental' },
+        development: { Url: 'https://dev-host/api/member/locker-rental' },
+        Qbi: { Url: './data/LockerQbiResponse.json' }
+    },
+
     // 欠費查詢（共用，供任何「申請/送單」類流程進入時檢查；僅提示、不擋收單）。
     // TODO(PM 確認)：客戶欠費查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key）
     OverdueQuery: {
