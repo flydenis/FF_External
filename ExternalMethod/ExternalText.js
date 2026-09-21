@@ -606,6 +606,35 @@ var ExternalText = {
         CategoryLabels: ['課程轉讓', '課程終止', '更換教練']
     },
 
+    // 當前已生效請假紀錄查詢文案（節點以 C010 起編）。
+    // 僅顯示已審核且生效中之 1 筆（畫面截圖已確認，非規格書單獨編號的功能，故不特別標 FF-xx）。
+    ActiveLeaveRecord: {
+        Intro: '您目前生效中的請假紀錄：',
+        NotFound: '當前無已生效之請假紀錄。',
+        FooterDisclaimer: '僅顯示已審核且生效中之1筆；無資料顯示「當前無已生效之請假紀錄」。',
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            Card: 'width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;'
+        },
+
+        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/ActiveLeaveRecordApiMgr 正規化後的資料。
+        buildCard(record) {
+            const s = ExternalText.ActiveLeaveRecord.CardStyle;
+            const period = `${record.leaveStartDate || ''} ～ ${record.leaveEndDate || ''}`;
+            return `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">已生效請假（合約 ${record.contractNo || ''}）</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">請假起訖</span><span style="${s.Value}">${period}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">合約現行結束日</span><span style="${s.Value}">${record.contractCurrentEndDate || ''}</span></div>` +
+                `</div>`;
+        }
+    },
+
     // 個人資料變更申請流程文案（節點以 C010 起編）
     // FormFlag 對應前端 FormFlow.registerForm('PersonalDataChangeForm', ...) 註冊的 key，
     // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。

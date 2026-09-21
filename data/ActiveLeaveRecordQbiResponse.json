@@ -1,0 +1,12 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "contractNo": "C-0001",
+            "leaveStartDate": "2026-08-01",
+            "leaveEndDate": "2026-09-30",
+            "contractCurrentEndDate": "2026-09-30"
+        }
+    ]
+}
