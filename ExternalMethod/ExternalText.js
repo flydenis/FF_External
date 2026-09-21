@@ -289,29 +289,348 @@ var ExternalText = {
         }
     },
 
+    // 帳務查詢及繳款流程文案（節點以 C010 起編，FF-05-01）。
+    // 規格書 20260915 版【摘要段落】：已結帳／到期／終止／請假／已審核／轉讓／行政中止 共 7 種合約狀態
+    // 都可查近三個月繳費紀錄（PM 2026-09-17 已確認以此摘要段落為準，非僅限「目前生效中」三種狀態）；
+    // 行政中止固定顯示 AdminHoldNote（不論帳款狀態）；預繳型不論狀態一律顯示 PrepaidNote（無按月繳費紀錄）；
+    // 不在上述 7 種狀態內者（如審核中）顯示 OtherStatusNote；在範圍內但近三個月無繳費紀錄顯示 EmptyRecordsNote。
+    PaymentHistory: {
+        Intro: '為您顯示當前生效的近三個月繳費紀錄：',
+        NotFound: '很抱歉，查無您的合約帳務資訊！建議您洽詢客服人員或現場服務人員，由專人協助您進一步確認，謝謝！',
+        SelectContractPrompt: '您目前有多筆合約，請選擇要查詢的合約：',
+        SelectContractInvalid: '請點選上方合約按鈕。',
+        OverdueReminder: '提醒您，尚有未繳款項，請儘速至廠館櫃台繳納及更新您的扣款資訊，避免影響您的會員權益。',
+        AdminHoldNote: '合約欠款，請洽會員服務中心。',
+        OtherStatusNote: '請洽廠館櫃檯或會員服務中心。',
+        PrepaidNote: '預繳型會籍，無相關按月繳費紀錄。',
+        EmptyRecordsNote: '三個月內無月費相關繳費紀錄。',
+        FooterDisclaimer: '提醒您僅呈現近3筆，預繳型會員顯示「無按月繳費紀錄」。',
+
+        // 規格【摘要段落】明列可查繳費紀錄的合約狀態（行政中止另有專屬分支，不重複列在此陣列）。
+        ActiveStatuses: ['已結帳', '到期', '終止', '請假', '已審核', '轉讓'],
+        AdminHoldStatus: '行政中止',
+        BillingTypeLabel: { monthly: '月繳型', prepaid: '預繳型' },
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        // Card 固定寬度：聊天氣泡容器（.ChatMessageContent）是 inline-block，寬度會依內容縮放，
+        // 6 欄表格跟純文字提示語混用時氣泡寬度會跳動，故此卡片改用固定寬度讓各種情境呈現一致大小。
+        CardStyle: {
+            Card: 'width:350px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            TypeBadge: 'color:#f5a623;font-weight:600;font-size:13px;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;',
+            SectionTitle: 'font-weight:700;font-size:14px;color:#1a1a1a;margin-top:14px;',
+            RecordTable: 'border:1px solid #c4c9cf;border-radius:8px;overflow:hidden;margin-top:8px;',
+            RecordHeaderRow: 'display:flex;background:#dde1e5;color:#4a4a4a;font-weight:700;font-size:12px;padding:8px 0;border-bottom:1px solid #c4c9cf;',
+            RecordRow: 'display:flex;font-size:13px;color:#1a1a1a;padding:8px 0;border-bottom:1px solid #c4c9cf;',
+            RecordRowLast: 'display:flex;font-size:13px;color:#1a1a1a;padding:8px 0;',
+            RecordCell: 'flex:1;text-align:center;padding:0 4px;',
+            RecordCellDivider: 'flex:1;text-align:center;padding:0 4px;border-left:1px solid #c4c9cf;',
+            Note: 'background:#fff8e1;color:#8a6d00;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;line-height:1.5;'
+        },
+
+        yymm(dateStr) {
+            const s = String(dateStr || '');
+            const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            return m ? `${m[1].slice(2)}/${m[2]}` : s;
+        },
+
+        mmdd(dateStr) {
+            const s = String(dateStr || '');
+            const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            return m ? `${m[2]}-${m[3]}` : (s || '-');
+        },
+
+        // 多合約時，第一層讓使用者選擇要查詢哪一筆合約（Web HTML 按鈕，submit=合約編號）。
+        buildSelectButtons(contracts) {
+            const P = ExternalText.PaymentHistory;
+            return (contracts || []).map(c => ({
+                label: `${c.contractNo}（${P.yymm(c.startDate)}~${P.yymm(c.endDate)}）`,
+                submit: c.contractNo,
+                style: 'Secondary'
+            }));
+        },
+
+        // 依單一合約組 HTML 卡片：表頭（合約編號/類型/起訖日）＋依狀態顯示繳費紀錄表或對應提示語。
+        buildContractCard(contract) {
+            const P = ExternalText.PaymentHistory;
+            const s = P.CardStyle;
+            const period = `${P.yymm(contract.startDate)} ~ ${P.yymm(contract.endDate)}`;
+            const typeLabel = P.BillingTypeLabel[contract.billingType] || contract.billingType || '';
+
+            let body;
+            const records = (contract.paymentRecords || []).slice(0, 3);
+            if (contract.contractStatus === P.AdminHoldStatus) {
+                body = `<div style="${s.Note}">${P.AdminHoldNote}</div>`;
+            } else if (contract.billingType === 'prepaid') {
+                body = `<div style="${s.Note}">${P.PrepaidNote}</div>`;
+            } else if (!P.ActiveStatuses.includes(contract.contractStatus)) {
+                body = `<div style="${s.Note}">${P.OtherStatusNote}</div>`;
+            } else if (!records.length) {
+                body = `<div style="${s.Note}">${P.EmptyRecordsNote}</div>`;
+            } else {
+                const overdueNote = contract.overdue ? `<div style="${s.Note}">${P.OverdueReminder}</div>` : '';
+                const cell = (text, isFirst) => `<span style="${isFirst ? s.RecordCell : s.RecordCellDivider}">${text}</span>`;
+                const rows = records.map((r, i) => {
+                    const amountText = `NT$${Number(r.amount || 0).toLocaleString()}`;
+                    const dateText = r.actualDeductDate ? P.mmdd(r.actualDeductDate) : '-';
+                    const refundText = r.refundDate ? P.mmdd(r.refundDate) : '-';
+                    const rowStyle = i === records.length - 1 ? s.RecordRowLast : s.RecordRow;
+                    return `<div style="${rowStyle}">` +
+                        cell(r.seq != null ? r.seq : i + 1, true) +
+                        cell(r.feeMonth || '', false) +
+                        cell(amountText, false) +
+                        cell(r.status || '', false) +
+                        cell(dateText, false) +
+                        cell(refundText, false) +
+                        `</div>`;
+                }).join('');
+                body = overdueNote +
+                    `<div style="${s.SectionTitle}">近三個月繳費紀錄</div>` +
+                    `<div style="${s.RecordTable}">` +
+                    `<div style="${s.RecordHeaderRow}">${cell('序號', true)}${cell('費用月份', false)}${cell('費用金額', false)}${cell('扣繳狀態', false)}${cell('實際扣繳日期', false)}${cell('退款日期', false)}</div>` +
+                    rows +
+                    `</div>`;
+            }
+
+            return `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">繳費紀錄（合約 ${contract.contractNo}）</span><span style="${s.TypeBadge}">${typeLabel}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">合約起訖</span><span style="${s.Value}">${period}</span></div>` +
+                body +
+                `</div>` +
+                `<div style="${s.Note}">${P.FooterDisclaimer}</div>`;
+        }
+    },
+
+    // 查詢月費扣款日流程文案（節點以 C010 起編）。
+    // PM 已確認：先只處理單一合約情境；預繳型無按月扣款日，另回 PrepaidNote。
+    PaymentDueDate: {
+        Intro: '您的月費扣款日說明如下：',
+        NotFound: '很抱歉，查無您的月費扣款日資訊！建議您洽詢客服人員或現場服務人員，由專人協助您進一步確認，謝謝！',
+        PrepaidNote: '您的會籍為預繳型，無按月扣款日資訊。',
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;'
+        },
+
+        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/PaymentDueDateApiMgr 正規化後的資料。
+        buildCard(record) {
+            const s = ExternalText.PaymentDueDate.CardStyle;
+            return `${ExternalText.PaymentDueDate.Intro}` +
+                `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">月費扣款日</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">扣款日</span><span style="${s.Value}">每月 ${record.dueDay} 日</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">特別說明</span><span style="${s.Value}">${record.note || ''}</span></div>` +
+                `</div>`;
+        }
+    },
+
+    // 扣款卡片資訊查詢流程文案（節點以 C010 起編）。
+    // PM 已確認：先只處理單一合約情境；卡片下方「前往扣款卡片變更」按鈕點擊後，
+    // 是送出一則固定文字訊息（ChangeButtonSubmit）讓平台依既有意圖設定重新路由，不在本流程內接下一步。
+    DeductionCard: {
+        Intro: '您現有及未來合約之扣款卡片：',
+        NotFound: '很抱歉，查無您的扣款卡片資訊！建議您洽詢客服人員或現場服務人員，由專人協助您進一步確認，謝謝！',
+        ChangeButtonLabel: '前往扣款卡片變更',
+        ChangeButtonSubmit: '扣款卡片變更',
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            Card: 'background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;'
+        },
+
+        // 「前往扣款卡片變更」導覽列樣式（比照 UI 稿：滿版金框白底、右側 chevron），
+        // 與一般 IntentBaseFlow.buildButtons 的圓角按鈕不同，故本流程獨立組 HTML，不共用 ButtonStyle。
+        ChangeButtonStyle: {
+            Container: 'margin-top:10px;',
+            Button: 'display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;padding:14px 16px;border-radius:12px;border:1px solid #f5c518;background:#ffffff;color:#1a1a1a;font-weight:600;font-size:14px;text-align:left;cursor:pointer;',
+            Chevron: 'color:#f5c518;font-size:16px;font-weight:700;margin-left:8px;'
+        },
+
+        // 組「前往扣款卡片變更」導覽列（點擊送出固定文字 ChangeButtonSubmit，見 DeductionCardQueryFlow 說明）。
+        buildChangeButton() {
+            const s = ExternalText.DeductionCard.ChangeButtonStyle;
+            return `<div style="${s.Container}">` +
+                `[link submit="${ExternalText.DeductionCard.ChangeButtonSubmit}"]` +
+                `<button style="${s.Button}"><span>${ExternalText.DeductionCard.ChangeButtonLabel}</span><span style="${s.Chevron}">›</span></button>` +
+                `[/link]</div>`;
+        },
+
+        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/DeductionCardApiMgr 正規化後的資料。
+        buildCard(record) {
+            const s = ExternalText.DeductionCard.CardStyle;
+            const feeText = `NT$${Number(record.monthlyFee || 0).toLocaleString()}`;
+            return `${ExternalText.DeductionCard.Intro}` +
+                `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">扣款卡片（合約 ${record.contractNo || ''}）</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">扣款月費</span><span style="${s.Value}">${feeText}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">每月扣款日</span><span style="${s.Value}">${record.dueDay || ''} 日</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">扣款銀行</span><span style="${s.Value}">${record.bankName || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">卡號末四碼</span><span style="${s.Value}">**** ${record.cardLastFour || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">有效年月</span><span style="${s.Value}">${record.validThru || ''}</span></div>` +
+                `</div>`;
+        }
+    },
+
+    // 扣款卡片變更申請流程文案（節點以 C010 起編，FF-05-02）。
+    // FormFlag 對應前端 FormFlow.registerForm('DeductionCardChangeForm', ...) 註冊的 key，
+    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單。藍字／紅字提示語 PM 已確認需在
+    // 對話中顯示（比照 InvoiceInfoChange 的紅字提示語作法，不只是表單內文字）。
+    DeductionCardChange: {
+        FormFlag: 'DeductionCardChangeForm',
+        BlueNotice: '<span style="color:#2563eb;">僅受理卡片扣款人為會員本人者，其他請至廠館櫃台或會員服務中心辦理。</span>',
+        RedNotice: '<span style="color:#e5484d;">申請內容請務必確認正確，以維護您的會籍權益。</span>',
+        MissingContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
+        MissingAuthLetter: '請上傳填妥之信用卡授權書後再送出。',
+        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
+        Cancelled: '已為您取消本次申請。'
+    },
+
+    // 會籍合約資料查詢流程文案（節點以 C010 起編，FF-04-00）。
+    // 規格【功能說明】：顯示最近兩筆合約（含到期／終止／轉讓），一次全部顯示（PM 已確認，不用像帳務查詢
+    // 先列清單選一筆）；行政終止合約的「合約狀態」欄位固定顯示提示語而非狀態字面值本身（規格【欄位說明】明列）。
+    // PM 已確認：此次先只做查詢本身，行政終止是否要回頭擋既有申辦/查詢流程待之後再議，不在本輪範圍。
+    Contract: {
+        Intro: '您的會籍合約（僅顯示最近兩筆，含到期／終止／轉讓）：',
+        NotFound: '無符合合約狀態資訊，若有相關問題請洽會員服務中心。',
+        AdminTerminationStatusText: '合約欠款，請洽會員服務中心',
+        AdminTerminationStatus: '行政終止',
+
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            Card: 'width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;'
+        },
+
+        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/ContractApiMgr 正規化後的資料。
+        buildCard(record) {
+            const s = ExternalText.Contract.CardStyle;
+            const period = `${record.startDate || ''} ～ ${record.endDate || ''}`;
+            const advisor = [record.advisorCode, record.advisorName].filter(Boolean).map((v, i) => i === 1 ? `（${v}）` : v).join('');
+            const statusText = record.contractStatus === ExternalText.Contract.AdminTerminationStatus
+                ? ExternalText.Contract.AdminTerminationStatusText
+                : (record.contractStatus || '');
+            return `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">會籍合約　${record.contractNo || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">合約起訖日</span><span style="${s.Value}">${period}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">會員卡別</span><span style="${s.Value}">${record.cardType || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">方案型態</span><span style="${s.Value}">${record.planType || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">可用分館</span><span style="${s.Value}">${record.availableStore || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">服務顧問</span><span style="${s.Value}">${advisor}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">合約狀態</span><span style="${s.Value}">${statusText}</span></div>` +
+                `</div>`;
+        }
+    },
+
+    // 合約異動申辦進度查詢流程文案（節點以 C010 起編，FF-06-01）。
+    // PM 已確認本輪只做會籍版（9 類，教練版類別屬於 FF-07-01 留待之後）；
+    // ECP 待處理查詢目前沒有真正的單一端點（PM 已確認先用 Qbi mock 假設已整合好的 5 筆結果）。
+    ApplicationProgress: {
+        Intro: '為您查詢申辦進度（同一問題、兩層答案），每層可左右滑動：',
+        Tier1Title: '第一層：線上表單處理',
+        Tier2Title: '第二層：各類別一年內最近一筆',
+        NotFound: '無相關申請紀錄。',
+
+        // 規格【欄位說明】九類申請類別，ECP 待處理／會員系統兩段共用同一組類別名稱。
+        CategoryLabels: ['暫停', '延展', '提前開啟請假', '升等', '轉館', '轉館加升等', '個資變更', '發票變更', '扣款卡片變更'],
+
+        // 規格【操作邏輯】會員系統狀態代碼轉換（會籍與教練一致）。
+        MemberSystemStatusLabel: {
+            '1': '案件審理中',
+            '2': '待結帳尚未送件',
+            '4': '未結帳已失效',
+            '9': '受理成功',
+            '3': '取消申請'
+        },
+
+        // 卡片外觀樣式：橫向捲動列＋固定寬度卡片，之後 PM 若要換配色只改這裡，不動流程程式。
+        CardStyle: {
+            SectionTitle: 'font-weight:700;font-size:14px;color:#1a1a1a;border-left:4px solid #f5c518;padding-left:8px;margin-top:14px;',
+            Row: 'display:flex;overflow-x:auto;gap:8px;padding:8px 2px;-webkit-overflow-scrolling:touch;',
+            Card: 'flex:0 0 auto;width:170px;box-sizing:border-box;background:#ffffff;border:1px solid #eee;border-radius:12px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Title: 'font-weight:700;font-size:13px;color:#1a1a1a;padding-bottom:8px;border-bottom:2px solid #f5c518;margin-bottom:8px;',
+            FieldLabel: 'color:#8a8a8a;font-size:12px;margin-top:8px;',
+            FieldLabelFirst: 'color:#8a8a8a;font-size:12px;',
+            FieldValue: 'color:#1a1a1a;font-weight:600;font-size:13px;margin-top:2px;'
+        },
+
+        // 依單筆申請紀錄組一張卡片。statusText 由呼叫端先轉換好帶入（ECP 待處理段是字面值，
+        // 會員系統段要先查 MemberSystemStatusLabel），本函式不管兩段的轉換規則差異。
+        buildCard(record, statusText) {
+            const s = ExternalText.ApplicationProgress.CardStyle;
+            return `<div style="${s.Card}">` +
+                `<div style="${s.Title}">${record.category || ''}</div>` +
+                `<div style="${s.FieldLabelFirst}">受理日期</div><div style="${s.FieldValue}">${record.acceptedDate || '-'}</div>` +
+                `<div style="${s.FieldLabel}">狀態</div><div style="${s.FieldValue}">${statusText || '-'}</div>` +
+                `</div>`;
+        },
+
+        // 組一整段（標題＋橫向捲動卡片列）。records 為空陣列時回傳空字串，由呼叫端決定是否要整段省略。
+        buildSection(title, records, statusTextFn) {
+            const s = ExternalText.ApplicationProgress.CardStyle;
+            if (!records || !records.length) return '';
+            const cards = records.map(r => ExternalText.ApplicationProgress.buildCard(r, statusTextFn(r))).join('');
+            return `<div style="${s.SectionTitle}">${title}</div><div style="${s.Row}">${cards}</div>`;
+        }
+    },
+
+    // 教練合約異動申辦進度查詢文案（節點以 C010 起編，FF-07-01 子項 2）。
+    // PM 已確認這次只做 FF-07-01 的「申辦進度查詢」子功能，合約 7 欄查詢／帳務繳費紀錄／上課紀錄 PDF 先不做。
+    // PM 已確認：教練版跟會籍版（FF-06-01）結構一致，也是兩段——第一段 ECP 待處理（不分類，上限 10 筆）、
+    // 第二段健身工廠會員系統各類別最近一筆（課程轉讓／課程終止／更換教練，最多 10 筆，同類別可重複出現，
+    // 不像會籍版每類別只取最新一筆）；狀態代碼轉換沿用 ApplicationProgress.MemberSystemStatusLabel
+    // （規格【操作邏輯】會籍與教練共用同一套代碼），CardStyle／buildCard／buildSection 也直接沿用，不重複定義。
+    CoachApplicationProgress: {
+        Intro: '為您查詢申辦進度（同一問題、兩層答案），每層可左右滑動：',
+        Tier1Title: '第一層：線上表單處理',
+        Tier2Title: '第二層：各類別最近一筆',
+        NotFound: '無相關申請紀錄。',
+        CategoryLabels: ['課程轉讓', '課程終止', '更換教練']
+    },
+
     // 個人資料變更申請流程文案（節點以 C010 起編）
-    // OpenMarker 是 C010 回覆的固定文字，前端 personal-data-change-form.js 監看聊天訊息比對到同一句就彈出表單；
-    // 兩邊各自維護同一組常數字串，改這裡要同步改前端的 OPEN_MARKER。
+    // FormFlag 對應前端 FormFlow.registerForm('PersonalDataChangeForm', ...) 註冊的 key，
+    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。
     PersonalDataChange: {
-        OpenMarker: '請於彈出視窗中填寫「個人資料變更申請」表單。',
+        FormFlag: 'PersonalDataChangeForm',
         MissingSelection: '請至少勾選一項要變更的項目（手機／戶籍地址／通訊地址／姓名）。',
         InvalidMobile: '請輸入正確的手機號碼（09 開頭 10 碼數字）。',
         InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
         MissingIdCard: '變更戶籍地址或姓名需上傳身分證正反面，請重新上傳後再送出。',
-        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。'
+        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
+        Cancelled: '已為您取消本次申請。'
     },
 
     // 發票資訊變更申請流程文案（節點以 C010 起編）
-    // OpenMarker 是 C010 回覆的固定文字，前端 invoice-info-change-form.js 監看聊天訊息比對到同一句就彈出表單；
-    // 兩邊各自維護同一組常數字串，改這裡要同步改前端的 OPEN_MARKER。
+    // FormFlag 對應前端 FormFlow.registerForm('InvoiceInfoChangeForm', ...) 註冊的 key，
+    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。
     InvoiceInfoChange: {
-        OpenMarker: '請於彈出視窗中填寫「發票資訊變更申請」表單。',
-        // 規格【功能說明】4. 紅字提示語：C010 進場時與 OpenMarker 一起回在對話裡（PM 已確認需在對話中顯示，不只是表單內文字）。
+        FormFlag: 'InvoiceInfoChangeForm',
+        // 規格【功能說明】4. 紅字提示語：C010 進場時回在對話裡（PM 已確認需在對話中顯示，不只是表單內文字）。
         ReminderNotice: '<span style="color:#e5484d;">申請內容請務必確認正確，以維護您的發票資訊，申請後已開立之發票七日內若需變更，請洽廠館櫃台。</span>',
         MissingSelection: '請擇一填寫發票資訊（統一編號或電子發票會員載具）。',
         InvalidUnified: '統一編號請輸入正確的 8 碼數字。',
         InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
-        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。'
+        SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
+        Cancelled: '已為您取消本次申請。'
     }
 };
 

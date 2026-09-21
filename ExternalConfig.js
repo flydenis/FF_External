@@ -35,19 +35,6 @@ module.exports = {
         Qbi: { Url: './data/PhoneQbiResponse.json' }
     },
 
-    // 個人資料變更申請：受理後資料回寫 ECP 單元 CUS.ChangeBasicInfo（PM 已確認單元編碼與欄位，見
-    // Api/PersonalDataChangeApiMgr.js 的 mapToEcpFields()）。
-    // TODO(PM 確認)：寫入方法後綴沿用 ChainseaApiMgr 既有慣例 .Save.data，實際方法名稱待對照 ECP 文件確認。
-    PersonalDataChangeApi: {
-        EcpUnitPath: 'CUS.ChangeBasicInfo.Save.data'
-    },
-
-    // 發票資訊變更申請：與個人資料變更共用同一個 ECP 單元 CUS.ChangeBasicInfo（PM 已確認），
-    // 差別只在欄位對應不同，見 Api/InvoiceInfoChangeApiMgr.js 的 mapToEcpFields()。
-    InvoiceInfoChangeApi: {
-        EcpUnitPath: 'CUS.ChangeBasicInfo.Save.data'
-    },
-
     // 身分證等證明文件上傳限制（僅 PersonalDataChange 流程使用）
     PersonalDataChangeUpload: {
         MaxFileSizeMB: 10,
@@ -77,6 +64,12 @@ module.exports = {
         development: { Url: 'https://dev-host/api/member/locker-rental' },
         Qbi: { Url: './data/LockerQbiResponse.json' }
     },
+    // 扣款卡片變更申請的信用卡授權書上傳限制（單檔，僅 jpg/png/jpeg），走獨立 /DeductionCardChangeUpload 端點。
+    DeductionCardChangeUpload: {
+        MaxFileSizeMB: 10,
+        MaxFileCount: 1,
+        AllowedExt: ['.jpg', '.jpeg', '.png']
+    },
 
     // 欠費查詢（共用，供任何「申請/送單」類流程進入時檢查；僅提示、不擋收單）。
     // TODO(PM 確認)：客戶欠費查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key）
@@ -84,5 +77,68 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/overdue' },
         development: { Url: 'https://dev-host/api/member/overdue' },
         Qbi: { Url: './data/OverdueQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：FF-05-01 帳務查詢及繳款，客戶尚未提供 API 規格，Product/development 先放 placeholder，
+    // 目前 Mode 固定用 Qbi 讀本機 mock（見 data/PaymentHistoryQbiResponse.json），待客戶 API 到位後再補上實際網址與帶入欄位。
+    PaymentHistoryQuery: {
+        Product: { Url: 'https://prod-host/api/member/payment-history' },
+        development: { Url: 'https://dev-host/api/member/payment-history' },
+        Qbi: { Url: './data/PaymentHistoryQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：查詢月費扣款日，客戶尚未提供 API 規格，Product/development 先放 placeholder，
+    // 目前 Mode 固定用 Qbi 讀本機 mock（見 data/PaymentDueDateQbiResponse.json），待客戶 API 到位後再補上實際網址與帶入欄位。
+    // 先只處理單一合約情境（PM 已確認），多合約情境待之後有需求再補。
+    PaymentDueDateQuery: {
+        Product: { Url: 'https://prod-host/api/member/payment-due-date' },
+        development: { Url: 'https://dev-host/api/member/payment-due-date' },
+        Qbi: { Url: './data/PaymentDueDateQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：扣款卡片資訊查詢，客戶尚未提供 API 規格，Product/development 先放 placeholder，
+    // 目前 Mode 固定用 Qbi 讀本機 mock（見 data/DeductionCardQbiResponse.json），待客戶 API 到位後再補上實際網址與帶入欄位。
+    // 先只處理單一合約情境（PM 已確認），多合約情境待之後有需求再補。
+    DeductionCardQuery: {
+        Product: { Url: 'https://prod-host/api/member/deduction-card' },
+        development: { Url: 'https://dev-host/api/member/deduction-card' },
+        Qbi: { Url: './data/DeductionCardQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：會籍合約資料查詢，客戶尚未提供 API 規格，Product/development 先放 placeholder，
+    // 目前 Mode 固定用 Qbi 讀本機 mock（見 data/ContractQbiResponse.json），待客戶 API 到位後再補上實際網址與帶入欄位。
+    ContractQuery: {
+        Product: { Url: 'https://prod-host/api/member/contract' },
+        development: { Url: 'https://dev-host/api/member/contract' },
+        Qbi: { Url: './data/ContractQbiResponse.json' }
+    },
+
+    // TODO(架構待確認)：ECP 待處理表單目前沒有單一端點可一次查到所有 CUS.* 類型（PM 已確認先用 Qbi mock 假設
+    // 已經整合好的結果，待客戶/架構確認真正的查詢機制後再調整）。
+    EcpPendingApplicationQuery: {
+        Product: { Url: 'https://prod-host/api/ecp/pending-applications' },
+        development: { Url: 'https://dev-host/api/ecp/pending-applications' },
+        Qbi: { Url: './data/EcpPendingApplicationQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：健身工廠會員系統各類別最近一筆申請，客戶尚未提供 API 規格，先用 Qbi mock。
+    MemberSystemApplicationQuery: {
+        Product: { Url: 'https://prod-host/api/ff/member-applications' },
+        development: { Url: 'https://dev-host/api/ff/member-applications' },
+        Qbi: { Url: './data/MemberSystemApplicationQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：教練合約異動申辦進度（課程轉讓／課程終止／更換教練，會員系統這段），客戶尚未提供 API 規格，先用 Qbi mock。
+    CoachApplicationQuery: {
+        Product: { Url: 'https://prod-host/api/ff/coach-applications' },
+        development: { Url: 'https://dev-host/api/ff/coach-applications' },
+        Qbi: { Url: './data/CoachApplicationQbiResponse.json' }
+    },
+
+    // TODO(架構待確認)：教練版 ECP 待處理表單，跟 FF-06-01 會籍版一樣目前沒有單一端點可查，PM 已確認先用 Qbi mock。
+    CoachPendingApplicationQuery: {
+        Product: { Url: 'https://prod-host/api/ecp/coach-pending-applications' },
+        development: { Url: 'https://dev-host/api/ecp/coach-pending-applications' },
+        Qbi: { Url: './data/CoachPendingApplicationQbiResponse.json' }
     }
 };

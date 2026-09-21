@@ -7,20 +7,28 @@ const PersonalDataChangeUploadMgr = require('../Api/PersonalDataChangeUploadMgr'
 const P = wording.PersonalDataChange;
 const MOBILE_PATTERN = /^09\d{8}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// 打進 ECP 的附件顯示名稱固定用這組（PM 已確認，比照扣款卡片變更授權書的作法），不用使用者原始上傳檔名；
+// 依 PersonalDataChangeForm.js 送出順序固定為 [正面, 反面]（前端已檢查兩者都上傳過才會送出）。
+const ID_CARD_DISPLAY_NAMES = ['身分證正面', '身分證反面'];
 
-// 個人資料變更申請：C010 回固定提示語，由前端 personal-data-change-form.js 監看比對後彈出表單；
-// 使用者在表單送出後，前端把整份表單 JSON 當 ask_input 送回，本流程在 C020 收下並驗證/受理。
+// 個人資料變更申請：C010 回 parameters:{ PersonalDataChangeForm:'PersonalDataChangeForm' }，
+// 由前端 FormFlow.js 攔截並開啟 PersonalDataChangeForm.js 的表單；使用者填完送出（或取消）後，
+// FormFlow 把表單 values（或 {action:'CANCEL'}）當 ask_input 送回，本流程在 C020 收下並驗證/受理。
 // TODO(PM 確認)：ask_input 表單 JSON 的確切欄位契約與前端一起定案後，如有調整請同步改 validate()。
 class PersonalDataChangeFlow extends IntentBaseFlow {
     async C010() {
         this.logger.InfoLog(`[${this.FlowName}] C010 進入個人資料變更申請`);
         const memberKey = this.customerData && this.customerData.memberKey;
         const overdueNotice = await this.checkOverdueNotice({ key: memberKey });
-        const message = overdueNotice ? `${overdueNotice}\n\n${P.OpenMarker}` : P.OpenMarker;
-        return this.reply({ message, isContinuum: '1', nextStep: 'C020' });
+        return this.reply({ message: overdueNotice || '', parameters: { [P.FormFlag]: P.FormFlag }, nextStep: 'C020' });
     }
 
     async C020() {
+        if (this.isCancelAction(this.askInput)) {
+            this.logger.InfoLog(`[${this.FlowName}] C020 使用者取消`);
+            return this.reply({ message: P.Cancelled, isContinuum: '0' });
+        }
+
         let payload = null;
         try { payload = JSON.parse(this.askInput); } catch (e) { payload = null; }
 
@@ -54,19 +62,24 @@ class PersonalDataChangeFlow extends IntentBaseFlow {
             return;
         }
 
-        for (const ref of idCardFiles) {
+        for (let i = 0; i < idCardFiles.length; i++) {
+            const ref = idCardFiles[i];
             if (!ref || !ref.fileId) continue;
             const fileBuffer = PersonalDataChangeUploadMgr.readFile(ref.fileId);
             if (!fileBuffer || !fileBuffer.length) {
                 this.logger.AlertLog(`[${this.FlowName}] 附件讀取失敗，略過上傳（fileId=${ref.fileId}）`);
                 continue;
             }
-            const fileName = ref.fileName || ref.fileId;
+            // 副檔名沿用原始上傳檔名判斷 content-type，但送進 ECP 的顯示檔名固定用正面/反面標籤，
+            // 不論使用者手機/相簿裡原始檔名叫什麼，ECP 端看到的都是「身分證正面.jpg」／「身分證反面.jpg」。
+            const originalName = ref.fileName || ref.fileId;
+            const ext = (String(originalName).match(/\.[^.]+$/) || ['.jpg'])[0];
+            const fileName = `${ID_CARD_DISPLAY_NAMES[i] || originalName}${ext}`;
             const uploaded = await ai3Api.uploadPersonalDataChangeAttachment({
                 entityId,
                 fileName,
                 fileBuffer,
-                contentType: PersonalDataChangeUploadMgr.mimeFromExt(fileName),
+                contentType: PersonalDataChangeUploadMgr.mimeFromExt(originalName),
                 logger: this.logger
             });
             // 上傳到 ECP 成功才清暫存檔；失敗保留，方便之後補上傳或排查。

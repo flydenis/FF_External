@@ -1,11 +1,13 @@
-const axios = require('axios');
-const ExternalConfig = require('../ExternalConfig');
-const ChainseaApiMgr = require('./ChainseaApiMgr');
+const { createEcpApplicationMgr } = require('./EcpApplicationMgr');
 
-// Qs.Attachment.UploadEntityAttachment 掛附件用的 unitId，PM 已確認為 CUS.ChangeBasicInfo 的 unitId。
-const ATTACHMENT_ENTITY_UNIT_ID = 'ccb96422-e464-4f8f-9b69-04bb55edc678';
+// 個人資料變更申請（CUS.ChangeBasicInfo）寫入 + 身分證正反面附件上傳。token 管理／multipart 上傳等共用邏輯都在
+// EcpApplicationMgr，這裡只負責「個人資料變更專屬」的部分：savePath／entityUnitId，以及表單欄位怎麼映射成 ECP 欄位（record）。
+const mgr = createEcpApplicationMgr({
+    savePath: 'CUS.ChangeBasicInfo.Save.data',
+    // Qs.Attachment.UploadEntityAttachment 掛附件用的 unitId，PM 已確認為 CUS.ChangeBasicInfo 的 unitId。
+    entityUnitId: 'ccb96422-e464-4f8f-9b69-04bb55edc678'
+});
 
-// 個人資料變更申請受理：資料回寫 ECP 單元 CUS.ChangeBasicInfo（PM 已確認欄位對應如下）。
 // U_CompanyUnified／U_ContractNum／U_InvoiceInfo／U_MemberCode 不屬本流程蒐集範圍或尚無資料來源，
 // 依 PM 指示先留空字串，之後有來源再補（U_MemberCode／U_ContractNum 待補）。
 class PersonalDataChangeApiMgr {
@@ -36,58 +38,15 @@ class PersonalDataChangeApiMgr {
         return record;
     }
 
+    // 新增一筆個人資料變更申請案。回傳 { entityId }：entityId 取自回應 entityIds[0]，供後續身分證附件上傳時帶入。
     async submit({ chatId, applyData, logger }) {
-        const base = (ExternalConfig.EcpApi && ExternalConfig.EcpApi.Url) || '';
-        if (!base) {
-            logger && logger.InfoLog('[PersonalDataChangeApiMgr] EcpApi.Url 未設定，略過回寫（僅記錄申請內容）');
-            logger && logger.InfoLog(`[PersonalDataChangeApiMgr] 申請內容: ${JSON.stringify(applyData)}`);
-            return { ok: true, skipped: true };
-        }
-
-        const unitPath = (ExternalConfig.PersonalDataChangeApi && ExternalConfig.PersonalDataChangeApi.EcpUnitPath) || '';
-        const url = base + unitPath;
-        const body = { data: [this.mapToEcpFields(applyData)] };
+        const record = this.mapToEcpFields(applyData);
         logger && logger.InfoLog(`[PersonalDataChangeApiMgr] 受理個人資料變更申請（chatId=${chatId}）`);
-        const resp = await ChainseaApiMgr.post(url, body, logger);
-        const entityId = resp && Array.isArray(resp.entityIds) ? resp.entityIds[0] : undefined;
-        if (resp && !entityId) {
-            logger && logger.AlertLog(`[PersonalDataChangeApiMgr] submit 未取得 entityId，回應=${JSON.stringify(resp)}`);
-        }
-        return resp ? { ok: true, entityId, data: resp } : { ok: false };
+        return mgr.saveApplication(record, logger);
     }
 
-    // 上傳一份身分證附件到指定 entity：multipart/form-data，args 帶 {unitId, entityId}、file 帶實際檔案內容。
-    // 作法比照 Api/AgentApplicationApiMgr.js 的 uploadEntityAttachment（main a6325b9「附件上傳完成」）。
-    async uploadEntityAttachment({ entityId, fileName, fileBuffer, contentType, logger }) {
-        if (!fileBuffer || !fileBuffer.length) {
-            logger && logger.AlertLog(`[PersonalDataChangeApiMgr] uploadEntityAttachment 無檔案內容，略過（entityId=${entityId}, fileName=${fileName}）`);
-            return null;
-        }
-        const base = (ExternalConfig.EcpApi && ExternalConfig.EcpApi.Url) || '';
-        const url = base + 'Qs.Attachment.UploadEntityAttachment.data';
-        const authorization = (ExternalConfig.EcpApi && ExternalConfig.EcpApi.Authorization) || '';
-        const timeout = ExternalConfig.RequestTimeout || 50000;
-
-        const started = Date.now();
-        const args = JSON.stringify({ unitId: ATTACHMENT_ENTITY_UNIT_ID, entityId });
-        const form = new FormData();
-        form.append('args', args);
-        form.append('file', new Blob([fileBuffer], { type: contentType || 'application/octet-stream' }), fileName);
-
-        logger && logger.InfoLog(`[PersonalDataChangeApiMgr] → 上傳附件 ${url} args=${args} file=${fileName}（${fileBuffer.length} bytes）`);
-        try {
-            const resp = await axios.post(url, form, {
-                timeout,
-                headers: { Authorization: authorization },
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity
-            });
-            logger && logger.InfoLog(`[PersonalDataChangeApiMgr] ← 附件上傳（${Date.now() - started}ms, HTTP ${resp.status}）Body: ${JSON.stringify(resp.data)}`);
-            return resp.data;
-        } catch (err) {
-            logger && logger.AlertLog(`[PersonalDataChangeApiMgr] ✗ 附件上傳失敗（${Date.now() - started}ms）：${err && err.message ? err.message : err}`);
-            return null;
-        }
+    uploadEntityAttachment(args) {
+        return mgr.uploadEntityAttachment(args);
     }
 }
 

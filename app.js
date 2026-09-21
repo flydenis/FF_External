@@ -22,6 +22,14 @@ const InvoiceInfoChangeFlow = require('./ExternalFlow/InvoiceInfoChangeFlow');
 const CoachContractTerminationFlow = require('./ExternalFlow/CoachContractTerminationFlow');
 const LockerQueryFlow = require('./ExternalFlow/LockerQueryFlow');
 const MembershipTerminationFlow = require('./ExternalFlow/MembershipTerminationFlow');
+const PaymentHistoryQueryFlow = require('./ExternalFlow/PaymentHistoryQueryFlow');
+const PaymentDueDateQueryFlow = require('./ExternalFlow/PaymentDueDateQueryFlow');
+const DeductionCardQueryFlow = require('./ExternalFlow/DeductionCardQueryFlow');
+const DeductionCardChangeFlow = require('./ExternalFlow/DeductionCardChangeFlow');
+const deductionCardChangeUploadMgr = require('./Api/DeductionCardChangeUploadMgr');
+const ContractQueryFlow = require('./ExternalFlow/ContractQueryFlow');
+const ApplicationProgressQueryFlow = require('./ExternalFlow/ApplicationProgressQueryFlow');
+const CoachApplicationProgressQueryFlow = require('./ExternalFlow/CoachApplicationProgressQueryFlow');
 const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
 const { arrayUpload: agentArrayUpload, buildFileRefs: buildAgentFileRefs } = require('./Api/AgentUploadMgr');
 
@@ -105,6 +113,13 @@ app.post('/InvoiceInfoChangeFlow', (req, res) => runFlow({ req, res, FlowClass: 
 app.post('/CoachContractTerminationFlow', (req, res) => runFlow({ req, res, FlowClass: CoachContractTerminationFlow, flowName: 'CoachContractTerminationFlow' }));
 app.post('/LockerQueryFlow', (req, res) => runFlow({ req, res, FlowClass: LockerQueryFlow, flowName: 'LockerQueryFlow' }));
 app.post('/MembershipTerminationFlow', (req, res) => runFlow({ req, res, FlowClass: MembershipTerminationFlow, flowName: 'MembershipTerminationFlow' }));
+app.post('/PaymentHistoryQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PaymentHistoryQueryFlow, flowName: 'PaymentHistoryQueryFlow' }));
+app.post('/PaymentDueDateQueryFlow', (req, res) => runFlow({ req, res, FlowClass: PaymentDueDateQueryFlow, flowName: 'PaymentDueDateQueryFlow' }));
+app.post('/DeductionCardQueryFlow', (req, res) => runFlow({ req, res, FlowClass: DeductionCardQueryFlow, flowName: 'DeductionCardQueryFlow' }));
+app.post('/DeductionCardChangeFlow', (req, res) => runFlow({ req, res, FlowClass: DeductionCardChangeFlow, flowName: 'DeductionCardChangeFlow' }));
+app.post('/ContractQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ContractQueryFlow, flowName: 'ContractQueryFlow' }));
+app.post('/ApplicationProgressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ApplicationProgressQueryFlow, flowName: 'ApplicationProgressQueryFlow' }));
+app.post('/CoachApplicationProgressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: CoachApplicationProgressQueryFlow, flowName: 'CoachApplicationProgressQueryFlow' }));
 
 // 各流程的檔案上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶（不經 ask_input，
 // 避免撞到 ECP 對話引擎自己的 FOriginArgs 欄位長度限制）。三支路由共用同一套 handleUpload 處理邏輯，
@@ -131,23 +146,7 @@ function handleUpload(mgr, label) {
 app.post('/PersonalDataChangeUpload', handleUpload(personalDataChangeUploadMgr, 'PersonalDataChangeUpload'));
 app.post('/AgentUpload', handleUpload(agentUploadMgr, 'AgentUpload'));
 app.post('/LeaveUpload', handleUpload(leaveUploadMgr, 'LeaveUpload'));
-
-// 代理人流程的切結書/代理人證件/會員證件上傳：同樣非對話輪次，前端選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶。
-// TODO(PM 確認)：正式環境要把 Access-Control-Allow-Origin 收斂成實際的前端網域，不要留 '*'。
-app.post('/AgentUpload', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  agentArrayUpload(req, res, (err) => {
-    const chatId = (req.body && req.body.ask_chatId) || 'unknown';
-    const logger = new LoggerMgr('AgentUpload', chatId);
-    if (err) {
-      logger.AlertLog(`上傳失敗: ${err.message}`);
-      return res.status(400).json({ ok: false, message: err.message });
-    }
-    const files = buildAgentFileRefs(req.files);
-    logger.InfoLog(`上傳成功: ${JSON.stringify(files)}`);
-    res.json({ ok: true, files });
-  });
-});
+app.post('/DeductionCardChangeUpload', handleUpload(deductionCardChangeUploadMgr, 'DeductionCardChangeUpload'));
 
 app.use((req, res, next) => next(createError(404)));
 app.use((err, req, res, next) => { res.status(err.status || 500).json({ error: err.message }); });
