@@ -140,5 +140,14 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/ecp/coach-pending-applications' },
         development: { Url: 'https://dev-host/api/ecp/coach-pending-applications' },
         Qbi: { Url: './data/CoachPendingApplicationQbiResponse.json' }
+    },
+
+    // 當前已生效請假紀錄查詢。TODO(架構待確認)：規格附錄資料字典裡 U_StopDuring（已生效請假起訖日）
+    // 屬於 TpCUSmStartMembership（提前開啟請假會籍）單元，實際上線後應可能改用 getListData 查真實資料
+    // （已驗證 getListData 這個查詢機制可用），目前先用 Qbi mock。
+    ActiveLeaveRecordQuery: {
+        Product: { Url: 'https://prod-host/api/member/active-leave-record' },
+        development: { Url: 'https://dev-host/api/member/active-leave-record' },
+        Qbi: { Url: './data/ActiveLeaveRecordQbiResponse.json' }
     }
 };

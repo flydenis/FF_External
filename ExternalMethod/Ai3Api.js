@@ -9,6 +9,7 @@ const ecpPendingApplicationApiMgr = require('../Api/EcpPendingApplicationApiMgr'
 const memberSystemApplicationApiMgr = require('../Api/MemberSystemApplicationApiMgr');
 const coachApplicationApiMgr = require('../Api/CoachApplicationApiMgr');
 const coachPendingApplicationApiMgr = require('../Api/CoachPendingApplicationApiMgr');
+const activeLeaveRecordApiMgr = require('../Api/ActiveLeaveRecordApiMgr');
 const overdueApiMgr = require('../Api/OverdueApiMgr');
 const lockerApiMgr = require('../Api/LockerApiMgr');
 const paymentHistoryApiMgr = require('../Api/PaymentHistoryApiMgr');
@@ -68,6 +69,10 @@ class Ai3Api {
 
     queryCoachPendingApplications(payload) {
         return coachPendingApplicationApiMgr.query(payload);
+    }
+
+    queryActiveLeaveRecord(payload) {
+        return activeLeaveRecordApiMgr.query(payload);
     }
 
     queryOverdue(payload) {
