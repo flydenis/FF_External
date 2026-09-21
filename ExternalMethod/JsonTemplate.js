@@ -55,6 +55,23 @@ let JsonTemplate = {
     getQuickReply: function ({ isContinuum, content }) {
         const payload = { QuickReply: content.message.QuickReply, type: content.message.type, params: content.parameters };
         return { isContinuum: isContinuum, messageType: 'QuickReply', message: JSON.stringify(payload) };
+    },
+
+    // 卡片僅 Web 能渲染；Phone 退化成純文字（唸標題/副標題）。message 為 IntentBaseFlow.buildCards() 的回傳值。
+    getCards: function ({ isContinuum, content, from }) {
+        const m = content.message || {};
+        if (from === 'phone') {
+            const text = (m.FQACardColumn || [])
+                .map(c => [c.title, c.FMsgAnswer].filter(Boolean).join('，')).join('；');
+            return { isContinuum: isContinuum, messageType: 'text', message: text };
+        }
+        const payload = {
+            type: 'Cards',
+            version: 'v770',
+            imageAspectRatio: m.imageAspectRatio || 'rectangle',
+            FQACardColumn: m.FQACardColumn || []
+        };
+        return { isContinuum: isContinuum, messageType: 'Cards', message: JSON.stringify(payload) };
     }
 };
 

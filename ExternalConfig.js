@@ -57,6 +57,13 @@ module.exports = {
         AllowedExt: ['.jpg', '.jpeg', '.png']
     },
 
+    // TODO(PM 確認)：客戶鞋櫃租賃資訊查詢 API 規格（Product/development 網址、request 帶哪個欄位當查詢 key）；
+    // 目前尚無正式 API 可串，先以 Qbi 模式讀本機假資料展示效果。
+    LockerQuery: {
+        Product: { Url: 'https://prod-host/api/member/locker-rental' },
+        development: { Url: 'https://dev-host/api/member/locker-rental' },
+        Qbi: { Url: './data/LockerQbiResponse.json' }
+    },
     // 扣款卡片變更申請的信用卡授權書上傳限制（單檔，僅 jpg/png/jpeg），走獨立 /DeductionCardChangeUpload 端點。
     DeductionCardChangeUpload: {
         MaxFileSizeMB: 10,

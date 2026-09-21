@@ -10,6 +10,7 @@ const memberSystemApplicationApiMgr = require('../Api/MemberSystemApplicationApi
 const coachApplicationApiMgr = require('../Api/CoachApplicationApiMgr');
 const coachPendingApplicationApiMgr = require('../Api/CoachPendingApplicationApiMgr');
 const overdueApiMgr = require('../Api/OverdueApiMgr');
+const lockerApiMgr = require('../Api/LockerApiMgr');
 const paymentHistoryApiMgr = require('../Api/PaymentHistoryApiMgr');
 const paymentDueDateApiMgr = require('../Api/PaymentDueDateApiMgr');
 const deductionCardApiMgr = require('../Api/DeductionCardApiMgr');
@@ -73,6 +74,9 @@ class Ai3Api {
         return overdueApiMgr.query(payload);
     }
 
+    queryLockerRental(payload) {
+        return lockerApiMgr.query(payload);
+    }
     queryPaymentHistory(payload) {
         return paymentHistoryApiMgr.query(payload);
     }

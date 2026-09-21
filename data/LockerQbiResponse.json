@@ -1,0 +1,126 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0003",
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "planType": "年租方案",
+            "storeName": "○○廠",
+            "lockerType": "大型鞋櫃",
+            "lockerNo": "A-128"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0018",
+            "startDate": "2026-03-01",
+            "endDate": "2026-08-31",
+            "planType": "月租方案",
+            "storeName": "△△廠",
+            "lockerType": "小型鞋櫃",
+            "lockerNo": "B-045"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0003",
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "planType": "年租方案",
+            "storeName": "○○廠",
+            "lockerType": "大型鞋櫃",
+            "lockerNo": "A-128"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0018",
+            "startDate": "2026-03-01",
+            "endDate": "2026-08-31",
+            "planType": "月租方案",
+            "storeName": "△△廠",
+            "lockerType": "小型鞋櫃",
+            "lockerNo": "B-045"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0003",
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "planType": "年租方案",
+            "storeName": "○○廠",
+            "lockerType": "大型鞋櫃",
+            "lockerNo": "A-128"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0018",
+            "startDate": "2026-03-01",
+            "endDate": "2026-08-31",
+            "planType": "月租方案",
+            "storeName": "△△廠",
+            "lockerType": "小型鞋櫃",
+            "lockerNo": "B-045"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0003",
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "planType": "年租方案",
+            "storeName": "○○廠",
+            "lockerType": "大型鞋櫃",
+            "lockerNo": "A-128"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0018",
+            "startDate": "2026-03-01",
+            "endDate": "2026-08-31",
+            "planType": "月租方案",
+            "storeName": "△△廠",
+            "lockerType": "小型鞋櫃",
+            "lockerNo": "B-045"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0003",
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "planType": "年租方案",
+            "storeName": "○○廠",
+            "lockerType": "大型鞋櫃",
+            "lockerNo": "A-128"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0018",
+            "startDate": "2026-03-01",
+            "endDate": "2026-08-31",
+            "planType": "月租方案",
+            "storeName": "△△廠",
+            "lockerType": "小型鞋櫃",
+            "lockerNo": "B-045"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0003",
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "planType": "年租方案",
+            "storeName": "○○廠",
+            "lockerType": "大型鞋櫃",
+            "lockerNo": "A-128"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "LK-0018",
+            "startDate": "2026-03-01",
+            "endDate": "2026-08-31",
+            "planType": "月租方案",
+            "storeName": "△△廠",
+            "lockerType": "小型鞋櫃",
+            "lockerNo": "B-045"
+        }
+
+    ]
+}
