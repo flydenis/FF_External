@@ -6,7 +6,7 @@ const PersonalDataChangeUploadMgr = require('../Api/PersonalDataChangeUploadMgr'
 
 const P = wording.PersonalDataChange;
 const MOBILE_PATTERN = /^09\d{8}$/;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 // 打進 ECP 的附件顯示名稱固定用這組（PM 已確認，比照扣款卡片變更授權書的作法），不用使用者原始上傳檔名；
 // 依 PersonalDataChangeForm.js 送出順序固定為 [正面, 反面]（前端已檢查兩者都上傳過才會送出）。
 const ID_CARD_DISPLAY_NAMES = ['身分證正面', '身分證反面'];

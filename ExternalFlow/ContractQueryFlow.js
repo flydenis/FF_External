@@ -24,9 +24,9 @@ class ContractQueryFlow extends IntentBaseFlow {
         }
 
         // 規格【功能目的】：顯示最近兩筆（含到期／終止／轉讓），供會員回溯查詢舊合約與款項。
+        // 比照 LockerQueryFlow：多筆時橫向捲動＋左右箭頭點擊切換。
         const recent = contracts.slice(0, 2);
-        const cards = recent.map(c => P.buildCard(c)).join('');
-        return this.reply({ message: P.Intro + cards, isContinuum: '0' });
+        return this.reply({ message: P.Intro + P.buildCards(recent), isContinuum: '0' });
     }
 }
 

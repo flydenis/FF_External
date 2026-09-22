@@ -149,5 +149,21 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/active-leave-record' },
         development: { Url: 'https://dev-host/api/member/active-leave-record' },
         Qbi: { Url: './data/ActiveLeaveRecordQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：教練合約資料查詢（FF-07-01 子項 1），客戶尚未提供 API 規格，先用 Qbi mock。
+    // 規格【功能說明】3.：僅提供合約狀態為已結帳／已審核／到期／請假且尚有剩餘堂數者，Qbi mock 直接只放
+    // 符合資格的資料（比照其他查詢類流程的簡單 found/not-found 作法，不在流程內另做狀態分支）。
+    CoachContractQuery: {
+        Product: { Url: 'https://prod-host/api/member/coach-contract' },
+        development: { Url: 'https://dev-host/api/member/coach-contract' },
+        Qbi: { Url: './data/CoachContractQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：教練帳務・繳費紀錄查詢（FF-07-01 子項 3），客戶尚未提供 API 規格，先用 Qbi mock。
+    CoachPaymentHistoryQuery: {
+        Product: { Url: 'https://prod-host/api/member/coach-payment-history' },
+        development: { Url: 'https://dev-host/api/member/coach-payment-history' },
+        Qbi: { Url: './data/CoachPaymentHistoryQbiResponse.json' }
     }
 };

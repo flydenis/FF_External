@@ -6,7 +6,7 @@ const DeductionCardChangeUploadMgr = require('../Api/DeductionCardChangeUploadMg
 
 const P = wording.DeductionCardChange;
 const MOBILE_PATTERN = /^09\d{8}$/;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 // 打進 ECP 的附件顯示名稱固定用這個（PM 已確認），不用使用者原始上傳檔名；副檔名沿用原始檔案的副檔名。
 const AUTH_LETTER_DISPLAY_NAME = '信用卡授權書';
 
