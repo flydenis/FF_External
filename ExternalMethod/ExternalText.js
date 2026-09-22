@@ -487,17 +487,31 @@ var ExternalText = {
     },
 
     // 扣款卡片變更申請流程文案（節點以 C010 起編，FF-05-02）。
+    // C010 先問申辦身分（本人／代理人，比照 PersonalDataChangeFlow 等其他申辦類流程的做法）：
+    // 本人 → C030_Self 走原本的表單流程；代理人 → 交共用 AgentFlow 處理到底。
     // FormFlag 對應前端 FormFlow.registerForm('DeductionCardChangeForm', ...) 註冊的 key，
-    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單。藍字／紅字提示語 PM 已確認需在
+    // C020（SELF 分支）回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單。藍字／紅字提示語 PM 已確認需在
     // 對話中顯示（比照 InvoiceInfoChange 的紅字提示語作法，不只是表單內文字）。
     DeductionCardChange: {
+        IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
+        IdentityButtons: [
+            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
+            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+        ],
+        IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
+
         FormFlag: 'DeductionCardChangeForm',
         BlueNotice: '<span style="color:#2563eb;">僅受理卡片扣款人為會員本人者，其他請至廠館櫃台或會員服務中心辦理。</span>',
         RedNotice: '<span style="color:#e5484d;">申請內容請務必確認正確，以維護您的會籍權益。</span>',
         MissingContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
         MissingAuthLetter: '請上傳填妥之信用卡授權書後再送出。',
         SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
-        Cancelled: '已為您取消本次申請。'
+        Cancelled: '已為您取消本次申請。',
+
+        // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
+        // ApplicationType 沿用 ApplicationProgress.CategoryLabels 裡已對過的「扣款卡片變更」字面值。
+        ApplicationType: '扣款卡片變更',
+        ToAgentValue: 'ToAgentOfDeductionCardChangeFlow'
     },
 
     // 會籍合約資料查詢流程文案（節點以 C010 起編，FF-04-00）。
@@ -797,23 +811,46 @@ var ExternalText = {
         }
     },
 
-    // 個人資料變更申請流程文案（節點以 C010 起編）
+    // 個人資料變更申請流程文案（節點以 C010 起編）。
+    // C010 先問申辦身分（本人／代理人，比照 LeaveFlow／MembershipTerminationFlow／CoachContractTerminationFlow
+    // 的做法）：本人 → C030_Self 走原本的表單流程；代理人 → 交共用 AgentFlow 處理到底。
     // FormFlag 對應前端 FormFlow.registerForm('PersonalDataChangeForm', ...) 註冊的 key，
-    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。
+    // C020（SELF 分支）回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單。
     PersonalDataChange: {
+        IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
+        IdentityButtons: [
+            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
+            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+        ],
+        IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
+
         FormFlag: 'PersonalDataChangeForm',
         MissingSelection: '請至少勾選一項要變更的項目（手機／戶籍地址／通訊地址／姓名）。',
         InvalidMobile: '請輸入正確的手機號碼（09 開頭 10 碼數字）。',
         InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
         MissingIdCard: '變更戶籍地址或姓名需上傳身分證正反面，請重新上傳後再送出。',
         SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
-        Cancelled: '已為您取消本次申請。'
+        Cancelled: '已為您取消本次申請。',
+
+        // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
+        // ApplicationType 沿用 ApplicationProgress.CategoryLabels 裡已對過的「個資變更」字面值。
+        ApplicationType: '個資變更',
+        ToAgentValue: 'ToAgentOfPersonalDataChangeFlow'
     },
 
-    // 發票資訊變更申請流程文案（節點以 C010 起編）
+    // 發票資訊變更申請流程文案（節點以 C010 起編）。
+    // C010 先問申辦身分（本人／代理人，比照 PersonalDataChangeFlow 等其他申辦類流程的做法）：
+    // 本人 → C030_Self 走原本的表單流程；代理人 → 交共用 AgentFlow 處理到底。
     // FormFlag 對應前端 FormFlow.registerForm('InvoiceInfoChangeForm', ...) 註冊的 key，
-    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。
+    // C020（SELF 分支）回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單。
     InvoiceInfoChange: {
+        IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
+        IdentityButtons: [
+            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
+            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+        ],
+        IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
+
         FormFlag: 'InvoiceInfoChangeForm',
         // 規格【功能說明】4. 紅字提示語：C010 進場時回在對話裡（PM 已確認需在對話中顯示，不只是表單內文字）。
         ReminderNotice: '<span style="color:#e5484d;">申請內容請務必確認正確，以維護您的發票資訊，申請後已開立之發票七日內若需變更，請洽廠館櫃台。</span>',
@@ -821,7 +858,12 @@ var ExternalText = {
         InvalidUnified: '統一編號請輸入正確的 8 碼數字。',
         InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
         SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
-        Cancelled: '已為您取消本次申請。'
+        Cancelled: '已為您取消本次申請。',
+
+        // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
+        // ApplicationType 沿用 ApplicationProgress.CategoryLabels 裡已對過的「發票變更」字面值。
+        ApplicationType: '發票變更',
+        ToAgentValue: 'ToAgentOfInvoiceInfoChangeFlow'
     }
 };
 
