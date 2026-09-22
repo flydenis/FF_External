@@ -652,7 +652,6 @@ var ExternalText = {
     ActiveLeaveRecord: {
         Intro: '您目前生效中的請假紀錄：',
         NotFound: '當前無已生效之請假紀錄。',
-        FooterDisclaimer: '僅顯示已審核且生效中之1筆；無資料顯示「當前無已生效之請假紀錄」。',
 
         // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
         CardStyle: {

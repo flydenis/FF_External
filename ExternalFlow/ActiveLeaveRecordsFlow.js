@@ -18,8 +18,7 @@ class ActiveLeaveRecordsFlow extends IntentBaseFlow {
             return this.reply({ message: P.NotFound, isContinuum: '0' });
         }
 
-        const message = P.Intro + P.buildCard(result.record) + `<div style="color:#e5484d;font-size:12px;margin-top:8px;">${P.FooterDisclaimer}</div>`;
-        return this.reply({ message, isContinuum: '0' });
+        return this.reply({ message: P.Intro + P.buildCard(result.record), isContinuum: '0' });
     }
 }
 
