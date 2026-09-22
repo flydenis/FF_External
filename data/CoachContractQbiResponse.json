@@ -1,0 +1,29 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "contractNo": "PT-0007",
+            "startDate": "2025-09-01",
+            "endDate": "2026-09-30",
+            "availableStore": "○○廠",
+            "courseType": "一般課程 PT",
+            "totalSessions": 48,
+            "remainingSessions": 23,
+            "advisorCode": "T081",
+            "advisorName": "Kevin"
+        },
+        {
+            "key": "TEST0001",
+            "contractNo": "PT-0015",
+            "startDate": "2026-02-01",
+            "endDate": "2027-01-31",
+            "availableStore": "△△廠",
+            "courseType": "Power Plate",
+            "totalSessions": 24,
+            "remainingSessions": 6,
+            "advisorCode": "T093",
+            "advisorName": "Nina"
+        }
+    ]
+}

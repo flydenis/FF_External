@@ -1,0 +1,71 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "name": "丁大漢",
+            "contracts": [
+                {
+                    "contractNo": "PT-0007",
+                    "startDate": "2025-09-01",
+                    "endDate": "2026-09-30",
+                    "courseType": "一般課程 PT",
+                    "paymentRecords": [
+                        { "feeMonth": "2026-02", "deductDate": "2026-02-06", "amount": 2000, "status": "已繳" }
+                    ]
+                },
+                {
+                    "contractNo": "PT-0022",
+                    "startDate": "2026-04-01",
+                    "endDate": "2027-03-31",
+                    "courseType": "MMA",
+                    "paymentRecords": [
+                        { "feeMonth": "2026-08", "deductDate": "2026-08-10", "amount": 1800, "status": "已繳" }
+                    ]
+                }
+            ]
+        },
+        {
+            "key": "TEST0002",
+            "name": "王小美",
+            "contracts": [
+                {
+                    "contractNo": "PT-0015",
+                    "startDate": "2026-02-01",
+                    "endDate": "2027-01-31",
+                    "courseType": "Power Plate",
+                    "paymentRecords": [
+                        { "feeMonth": "2026-08", "deductDate": "2026-08-05", "amount": 1500, "status": "未繳" },
+                        { "feeMonth": "2026-07", "deductDate": "2026-07-05", "amount": 1500, "status": "已繳" },
+                        { "feeMonth": "2026-06", "deductDate": "2026-06-05", "amount": 1500, "status": "已繳" },
+                        { "feeMonth": "2026-05", "deductDate": "2026-05-05", "amount": 1500, "status": "已繳" }
+                    ]
+                }
+            ]
+        },
+        {
+            "key": "TEST0003",
+            "name": "陳阿明",
+            "contracts": [
+                {
+                    "contractNo": "PT-0007",
+                    "startDate": "2025-09-01",
+                    "endDate": "2026-09-30",
+                    "courseType": "一般課程 PT",
+                    "paymentRecords": [
+                        { "feeMonth": "2026-02", "deductDate": "2026-02-06", "amount": 2000, "status": "已繳" }
+                    ]
+                },
+                {
+                    "contractNo": "PT-0022",
+                    "startDate": "2026-04-01",
+                    "endDate": "2027-03-31",
+                    "courseType": "MMA",
+                    "paymentRecords": [
+                        { "feeMonth": "2026-08", "deductDate": "2026-08-10", "amount": 1800, "status": "已繳" }
+                    ]
+                }
+            ]
+        }
+    ]
+}

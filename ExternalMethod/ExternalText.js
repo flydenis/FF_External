@@ -505,22 +505,30 @@ var ExternalText = {
     // 先列清單選一筆）；行政終止合約的「合約狀態」欄位固定顯示提示語而非狀態字面值本身（規格【欄位說明】明列）。
     // PM 已確認：此次先只做查詢本身，行政終止是否要回頭擋既有申辦/查詢流程待之後再議，不在本輪範圍。
     Contract: {
-        Intro: '您的會籍合約（僅顯示最近兩筆，含到期／終止／轉讓）：',
+        Intro: '您的會籍合約（僅顯示最近兩筆，含到期／終止／轉讓，可點左右箭頭切換）：',
         NotFound: '無符合合約狀態資訊，若有相關問題請洽會員服務中心。',
         AdminTerminationStatusText: '合約欠款，請洽會員服務中心',
         AdminTerminationStatus: '行政終止',
 
-        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        // 卡片外觀樣式：多筆合約時比照 LockerInfo 的橫向捲動＋左右箭頭點擊切換做法（手機為主要通路，
+        // 箭頭比滑動軸好點按）。Scroller/Wrap/Arrow* 這組寫法原樣沿用 LockerInfo.CardStyle 的設計。
         CardStyle: {
-            Card: 'width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Wrap: 'position:relative;',
+            Scroller: 'display:flex;gap:12px;overflow-x:auto;width:1px;min-width:100%;box-sizing:border-box;padding:4px 34px 8px;margin-top:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;',
+            Card: 'flex:0 0 auto;width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
             TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
             Label: 'color:#8a8a8a;',
-            Value: 'color:#1a1a1a;font-weight:600;text-align:right;'
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;',
+            ArrowLeft: 'position:absolute;left:2px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.95);border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;line-height:1;color:#555;cursor:pointer;z-index:2;padding:0;',
+            ArrowRight: 'position:absolute;right:2px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.95);border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;line-height:1;color:#555;cursor:pointer;z-index:2;padding:0;'
         },
 
-        // 依查詢結果組 HTML 卡片。record 欄位對應 Api/ContractApiMgr 正規化後的資料。
+        // 一張卡片（含左右間距）的捲動步進值：Card 寬 300 + Scroller 的 gap 12。箭頭一次點擊移動一張卡片。
+        CardStep: 312,
+
+        // 單張卡片內容。record 欄位對應 Api/ContractApiMgr 正規化後的資料。
         buildCard(record) {
             const s = ExternalText.Contract.CardStyle;
             const period = `${record.startDate || ''} ～ ${record.endDate || ''}`;
@@ -537,6 +545,22 @@ var ExternalText = {
                 `<div style="${s.Row}"><span style="${s.Label}">服務顧問</span><span style="${s.Value}">${advisor}</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">合約狀態</span><span style="${s.Value}">${statusText}</span></div>` +
                 `</div>`;
+        },
+
+        // 依查詢結果組多張橫向卡片（比照 LockerInfo.buildCards：單張卡片時不顯示箭頭，直接呈現）。
+        // records 為 ContractQueryFlow 已 slice(0,2) 過的最近兩筆合約。
+        buildCards(records) {
+            const C = ExternalText.Contract;
+            const s = C.CardStyle;
+            const list = records || [];
+            const cardsHtml = list.map(r => C.buildCard(r)).join('');
+            const scrollId = 'cqi-scroll-' + CommonMethod.randomDigits(6);
+            const hideScrollbarStyle = `<script>(function(){if(!document.getElementById('cqi-style')){var st=document.createElement('style');st.id='cqi-style';st.textContent='.cqi-scroller::-webkit-scrollbar{display:none}';document.head.appendChild(st);}})();</script>`;
+            const arrowsHtml = list.length > 1
+                ? `<button type="button" style="${s.ArrowLeft}" onclick="document.getElementById('${scrollId}').scrollBy({left:-${C.CardStep},behavior:'smooth'})" aria-label="上一張">‹</button>` +
+                  `<button type="button" style="${s.ArrowRight}" onclick="document.getElementById('${scrollId}').scrollBy({left:${C.CardStep},behavior:'smooth'})" aria-label="下一張">›</button>`
+                : '';
+            return `${hideScrollbarStyle}<div style="${s.Wrap}"><div id="${scrollId}" class="cqi-scroller" style="${s.Scroller}">${cardsHtml}</div>${arrowsHtml}</div>`;
         }
     },
 
@@ -561,16 +585,23 @@ var ExternalText = {
             '3': '取消申請'
         },
 
-        // 卡片外觀樣式：橫向捲動列＋固定寬度卡片，之後 PM 若要換配色只改這裡，不動流程程式。
+        // 卡片外觀樣式：比照 LockerInfo／Contract 的橫向捲動＋左右箭頭點擊切換做法（手機為主要通路，
+        // 箭頭比滑動軸好點按），Wrap/Scroller/Arrow* 這組寫法原樣沿用。之後 PM 若要換配色只改這裡，不動流程程式。
         CardStyle: {
             SectionTitle: 'font-weight:700;font-size:14px;color:#1a1a1a;border-left:4px solid #f5c518;padding-left:8px;margin-top:14px;',
-            Row: 'display:flex;overflow-x:auto;gap:8px;padding:8px 2px;-webkit-overflow-scrolling:touch;',
+            Wrap: 'position:relative;',
+            Scroller: 'display:flex;gap:8px;overflow-x:auto;width:1px;min-width:100%;box-sizing:border-box;padding:4px 30px 8px;margin-top:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;',
             Card: 'flex:0 0 auto;width:170px;box-sizing:border-box;background:#ffffff;border:1px solid #eee;border-radius:12px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
             Title: 'font-weight:700;font-size:13px;color:#1a1a1a;padding-bottom:8px;border-bottom:2px solid #f5c518;margin-bottom:8px;',
             FieldLabel: 'color:#8a8a8a;font-size:12px;margin-top:8px;',
             FieldLabelFirst: 'color:#8a8a8a;font-size:12px;',
-            FieldValue: 'color:#1a1a1a;font-weight:600;font-size:13px;margin-top:2px;'
+            FieldValue: 'color:#1a1a1a;font-weight:600;font-size:13px;margin-top:2px;',
+            ArrowLeft: 'position:absolute;left:2px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.95);border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;line-height:1;color:#555;cursor:pointer;z-index:2;padding:0;',
+            ArrowRight: 'position:absolute;right:2px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.95);border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;line-height:1;color:#555;cursor:pointer;z-index:2;padding:0;'
         },
+
+        // 一張卡片（含左右間距）的捲動步進值：Card 寬 170 + Scroller 的 gap 8。箭頭一次點擊移動一張卡片。
+        CardStep: 178,
 
         // 依單筆申請紀錄組一張卡片。statusText 由呼叫端先轉換好帶入（ECP 待處理段是字面值，
         // 會員系統段要先查 MemberSystemStatusLabel），本函式不管兩段的轉換規則差異。
@@ -583,12 +614,22 @@ var ExternalText = {
                 `</div>`;
         },
 
-        // 組一整段（標題＋橫向捲動卡片列）。records 為空陣列時回傳空字串，由呼叫端決定是否要整段省略。
+        // 組一整段（標題＋橫向捲動卡片列＋左右箭頭）。records 為空陣列時回傳空字串，由呼叫端決定是否要整段省略；
+        // 只有 1 張卡片時不顯示箭頭（比照 LockerInfo.buildCards）。每段各自獨立的 scrollId，
+        // 供 ApplicationProgressQueryFlow／CoachApplicationProgressQueryFlow 的第一層/第二層各自捲動不互相干擾。
         buildSection(title, records, statusTextFn) {
-            const s = ExternalText.ApplicationProgress.CardStyle;
+            const A = ExternalText.ApplicationProgress;
+            const s = A.CardStyle;
             if (!records || !records.length) return '';
-            const cards = records.map(r => ExternalText.ApplicationProgress.buildCard(r, statusTextFn(r))).join('');
-            return `<div style="${s.SectionTitle}">${title}</div><div style="${s.Row}">${cards}</div>`;
+            const cards = records.map(r => A.buildCard(r, statusTextFn(r))).join('');
+            const scrollId = 'apr-scroll-' + CommonMethod.randomDigits(6);
+            const hideScrollbarStyle = `<script>(function(){if(!document.getElementById('apr-style')){var st=document.createElement('style');st.id='apr-style';st.textContent='.apr-scroller::-webkit-scrollbar{display:none}';document.head.appendChild(st);}})();</script>`;
+            const arrowsHtml = records.length > 1
+                ? `<button type="button" style="${s.ArrowLeft}" onclick="document.getElementById('${scrollId}').scrollBy({left:-${A.CardStep},behavior:'smooth'})" aria-label="上一張">‹</button>` +
+                  `<button type="button" style="${s.ArrowRight}" onclick="document.getElementById('${scrollId}').scrollBy({left:${A.CardStep},behavior:'smooth'})" aria-label="下一張">›</button>`
+                : '';
+            return `<div style="${s.SectionTitle}">${title}</div>${hideScrollbarStyle}` +
+                `<div style="${s.Wrap}"><div id="${scrollId}" class="apr-scroller" style="${s.Scroller}">${cards}</div>${arrowsHtml}</div>`;
         }
     },
 
@@ -631,6 +672,126 @@ var ExternalText = {
                 `<div style="${s.TitleRow}"><span style="${s.Title}">已生效請假（合約 ${record.contractNo || ''}）</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">請假起訖</span><span style="${s.Value}">${period}</span></div>` +
                 `<div style="${s.Row}"><span style="${s.Label}">合約現行結束日</span><span style="${s.Value}">${record.contractCurrentEndDate || ''}</span></div>` +
+                `</div>`;
+        }
+    },
+
+    // 教練合約資料查詢文案（節點以 C010 起編，FF-07-01 子項 1：7 欄卡片）。
+    // 規格【功能說明】1./3.：7 欄（教練課程合約編號／課程合約起訖日／可用分館／課程類別／總堂數／
+    // 剩餘堂數／主指導教練），僅提供合約狀態已結帳/已審核/到期/請假且尚有剩餘堂數者，最多 10 筆。
+    // 卡片外觀比照 LockerInfo／Contract：橫向捲動＋左右箭頭點擊切換。
+    CoachContract: {
+        Intro: '您的教練課程合約（僅顯示有剩餘堂數之有效合約，最多 10 筆）：',
+        NotFound: '無符合資訊紀錄，若有相關問題請洽專屬教練。',
+
+        CardStyle: {
+            Wrap: 'position:relative;',
+            Scroller: 'display:flex;gap:12px;overflow-x:auto;width:1px;min-width:100%;box-sizing:border-box;padding:4px 34px 8px;margin-top:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;',
+            Card: 'flex:0 0 auto;width:280px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;',
+            ArrowLeft: 'position:absolute;left:2px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.95);border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;line-height:1;color:#555;cursor:pointer;z-index:2;padding:0;',
+            ArrowRight: 'position:absolute;right:2px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.95);border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;line-height:1;color:#555;cursor:pointer;z-index:2;padding:0;'
+        },
+
+        // 一張卡片（含左右間距）的捲動步進值：Card 寬 280 + Scroller 的 gap 12。
+        CardStep: 292,
+
+        // 合約起訖日顯示用短格式（YYYY-MM-DD -> YY/MM），對應畫面上的「25/09 ～ 26/09」樣式。
+        formatShortDate(dateStr) {
+            const m = /^(\d{4})-(\d{2})-\d{2}$/.exec(dateStr || '');
+            return m ? `${m[1].slice(2)}/${m[2]}` : (dateStr || '');
+        },
+
+        // 單張卡片內容。record 欄位對應 Api/CoachContractApiMgr 正規化後的資料。
+        buildCard(record) {
+            const C = ExternalText.CoachContract;
+            const s = C.CardStyle;
+            const period = `${C.formatShortDate(record.startDate)} ～ ${C.formatShortDate(record.endDate)}`;
+            const advisor = [record.advisorCode, record.advisorName].filter(Boolean).join(' ');
+            return `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">教練合約　${record.contractNo || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">合約起訖</span><span style="${s.Value}">${period}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">可用分館</span><span style="${s.Value}">${record.availableStore || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">課程類別</span><span style="${s.Value}">${record.courseType || ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">總堂數</span><span style="${s.Value}">${record.totalSessions ?? ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">剩餘堂數</span><span style="${s.Value}">${record.remainingSessions ?? ''}</span></div>` +
+                `<div style="${s.Row}"><span style="${s.Label}">主指導教練</span><span style="${s.Value}">${advisor}</span></div>` +
+                `</div>`;
+        },
+
+        // 依查詢結果組多張橫向卡片（比照 LockerInfo/Contract：單張卡片時不顯示箭頭）。
+        buildCards(records) {
+            const C = ExternalText.CoachContract;
+            const s = C.CardStyle;
+            const list = records || [];
+            const cardsHtml = list.map(r => C.buildCard(r)).join('');
+            const scrollId = 'cci-scroll-' + CommonMethod.randomDigits(6);
+            const hideScrollbarStyle = `<script>(function(){if(!document.getElementById('cci-style')){var st=document.createElement('style');st.id='cci-style';st.textContent='.cci-scroller::-webkit-scrollbar{display:none}';document.head.appendChild(st);}})();</script>`;
+            const arrowsHtml = list.length > 1
+                ? `<button type="button" style="${s.ArrowLeft}" onclick="document.getElementById('${scrollId}').scrollBy({left:-${C.CardStep},behavior:'smooth'})" aria-label="上一張">‹</button>` +
+                  `<button type="button" style="${s.ArrowRight}" onclick="document.getElementById('${scrollId}').scrollBy({left:${C.CardStep},behavior:'smooth'})" aria-label="下一張">›</button>`
+                : '';
+            return `${hideScrollbarStyle}<div style="${s.Wrap}"><div id="${scrollId}" class="cci-scroller" style="${s.Scroller}">${cardsHtml}</div>${arrowsHtml}</div>`;
+        }
+    },
+
+    // 教練帳務・繳費紀錄查詢文案（節點以 C010 起編，FF-07-01 子項 3）。
+    // 規格【功能說明】3.：僅呈現扣款交易紀錄（本期不做教練合約扣款卡片變更）；單一合約直接顯示，
+    // 多筆合約先選（比照 PaymentHistoryQueryFlow 的兩層做法）。卡片排版依 PM 指示改回「費用月份/扣款日」
+    // 併排一列＋「金額」「狀態」各一列的卡片式呈現（畫面示意圖版本），不用規格原文字面的單行文字格式。
+    // 規格沒有講筆數上限（PM 已確認之前用截圖上的「兩筆」是誤植，改成跟 PaymentHistoryQueryFlow
+    // 一致的近 3 筆 slice(0,3)）。
+    CoachPaymentHistory: {
+        Intro: '點入即為繳費紀錄（本期不提供教練合約扣款卡片變更）：',
+        NotFound: '無符合資訊紀錄，若有相關問題請洽專屬教練。',
+        SelectContractPrompt: '您目前有多筆教練合約，請選擇要查詢的合約：',
+        SelectContractInvalid: '請點選上方合約按鈕。',
+
+        CardStyle: {
+            Card: 'width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
+            Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
+            ComboRow: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            ComboValue: 'color:#1a1a1a;font-weight:600;',
+            ComboLabel: 'color:#8a8a8a;font-size:12px;margin-top:2px;',
+            Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
+            Label: 'color:#8a8a8a;',
+            Value: 'color:#1a1a1a;font-weight:600;text-align:right;'
+        },
+
+        // 多合約時，第一層讓使用者選擇要查詢哪一筆合約（Web HTML 按鈕，submit=合約編號）。
+        buildSelectButtons(contracts) {
+            const P = ExternalText.PaymentHistory;
+            return (contracts || []).map(c => ({
+                label: `${c.contractNo}（${P.yymm(c.startDate)}~${P.yymm(c.endDate)}）`,
+                submit: c.contractNo,
+                style: 'Secondary'
+            }));
+        },
+
+        // 依單一合約組卡片：標題（合約編號＋課程類別）＋近 3 筆繳費紀錄，每筆一組「費用月份/扣款日」
+        // 併排一列＋「金額」「狀態」各一列。
+        buildContractCard(contract) {
+            const C = ExternalText.CoachPaymentHistory;
+            const s = C.CardStyle;
+            const mmdd = ExternalText.PaymentHistory.mmdd;
+            const records = (contract.paymentRecords || []).slice(0, 3);
+            const blocks = records.map(r => {
+                const amountText = `NT$${Number(r.amount || 0).toLocaleString()}`;
+                return `<div style="${s.ComboRow}">` +
+                    `<div><div style="${s.ComboValue}">${r.feeMonth || ''}</div><div style="${s.ComboLabel}">費用月份</div></div>` +
+                    `<div style="text-align:right;"><div style="${s.ComboLabel}">扣款日</div><div style="${s.ComboValue}">${mmdd(r.deductDate)}</div></div>` +
+                    `</div>` +
+                    `<div style="${s.Row}"><span style="${s.Label}">金額</span><span style="${s.Value}">${amountText}</span></div>` +
+                    `<div style="${s.Row}"><span style="${s.Label}">狀態</span><span style="${s.Value}">${r.status || ''}</span></div>`;
+            }).join('');
+            return `<div style="${s.Card}">` +
+                `<div style="${s.TitleRow}"><span style="${s.Title}">繳費紀錄 ${contract.contractNo || ''}（${contract.courseType || ''}）</span></div>` +
+                blocks +
                 `</div>`;
         }
     },

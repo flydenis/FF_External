@@ -31,6 +31,8 @@ const ContractQueryFlow = require('./ExternalFlow/ContractQueryFlow');
 const ApplicationProgressQueryFlow = require('./ExternalFlow/ApplicationProgressQueryFlow');
 const CoachApplicationProgressQueryFlow = require('./ExternalFlow/CoachApplicationProgressQueryFlow');
 const ActiveLeaveRecordsFlow = require('./ExternalFlow/ActiveLeaveRecordsFlow');
+const CoachContractQueryFlow = require('./ExternalFlow/CoachContractQueryFlow');
+const CoachPaymentHistoryQueryFlow = require('./ExternalFlow/CoachPaymentHistoryQueryFlow');
 const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
 const { arrayUpload: agentArrayUpload, buildFileRefs: buildAgentFileRefs } = require('./Api/AgentUploadMgr');
 
@@ -122,6 +124,8 @@ app.post('/ContractQueryFlow', (req, res) => runFlow({ req, res, FlowClass: Cont
 app.post('/ApplicationProgressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ApplicationProgressQueryFlow, flowName: 'ApplicationProgressQueryFlow' }));
 app.post('/CoachApplicationProgressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: CoachApplicationProgressQueryFlow, flowName: 'CoachApplicationProgressQueryFlow' }));
 app.post('/ActiveLeaveRecordsFlow', (req, res) => runFlow({ req, res, FlowClass: ActiveLeaveRecordsFlow, flowName: 'ActiveLeaveRecordsFlow' }));
+app.post('/CoachContractQueryFlow', (req, res) => runFlow({ req, res, FlowClass: CoachContractQueryFlow, flowName: 'CoachContractQueryFlow' }));
+app.post('/CoachPaymentHistoryQueryFlow', (req, res) => runFlow({ req, res, FlowClass: CoachPaymentHistoryQueryFlow, flowName: 'CoachPaymentHistoryQueryFlow' }));
 
 // 各流程的檔案上傳：非對話輪次，前端表單選檔後直接呼叫，回傳檔案參考供最終送出表單時附帶（不經 ask_input，
 // 避免撞到 ECP 對話引擎自己的 FOriginArgs 欄位長度限制）。三支路由共用同一套 handleUpload 處理邏輯，
