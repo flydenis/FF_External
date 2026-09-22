@@ -315,7 +315,7 @@ var ExternalText = {
         // Card 固定寬度：聊天氣泡容器（.ChatMessageContent）是 inline-block，寬度會依內容縮放，
         // 6 欄表格跟純文字提示語混用時氣泡寬度會跳動，故此卡片改用固定寬度讓各種情境呈現一致大小。
         CardStyle: {
-            Card: 'width:350px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Card: 'width:100%;max-width:350px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
             TitleRow: 'display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             TypeBadge: 'color:#f5a623;font-weight:600;font-size:13px;',
@@ -653,9 +653,10 @@ var ExternalText = {
         Intro: '您目前生效中的請假紀錄：',
         NotFound: '當前無已生效之請假紀錄。',
 
-        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。寬度用 100%+max-width（不是固定 px），
+        // 避免窄螢幕（手機聊天面板實際可用寬度常小於 300px）把卡片右側裁掉、超出版面。
         CardStyle: {
-            Card: 'width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Card: 'width:100%;max-width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
             TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
@@ -750,8 +751,9 @@ var ExternalText = {
         SelectContractPrompt: '您目前有多筆教練合約，請選擇要查詢的合約：',
         SelectContractInvalid: '請點選上方合約按鈕。',
 
+        // 寬度用 100%+max-width（不是固定 px），避免窄螢幕把卡片右側裁掉、超出版面。
         CardStyle: {
-            Card: 'width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Card: 'width:100%;max-width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
             TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             ComboRow: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
