@@ -5,7 +5,7 @@ const ExternalConfig = require('../ExternalConfig');
 
 const P = wording.InvoiceInfoChange;
 const MOBILE_PATTERN = /^09\d{8}$/;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const UNIFIED_PATTERN = /^\d{8}$/;
 // 三選一單選互斥（PM 已確認）：mobileBarcode 前端先隱藏不開放勾選，但資料結構先支援，供未來新系統開放使用。
 const VALID_TYPES = ['unified', 'memberDevice', 'mobileBarcode'];
