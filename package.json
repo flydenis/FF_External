@@ -5,7 +5,8 @@
   "description": "健身工廠 AI 客服 - External 外部知識點（會員體驗資訊查詢）",
   "main": "app.js",
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "verify": "node test/verify.js"
   },
   "dependencies": {
     "axios": "^1.13.2",

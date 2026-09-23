@@ -17,6 +17,8 @@ const lockerApiMgr = require('../Api/LockerApiMgr');
 const paymentHistoryApiMgr = require('../Api/PaymentHistoryApiMgr');
 const paymentDueDateApiMgr = require('../Api/PaymentDueDateApiMgr');
 const deductionCardApiMgr = require('../Api/DeductionCardApiMgr');
+const changeMembershipInitApiMgr = require('../Api/ChangeMembershipInitApiMgr');
+const changeMembershipApplicationApiMgr = require('../Api/ChangeMembershipApplicationApiMgr');
 
 // 業務層 API 包裝：流程只呼叫這裡，實際 HTTP/交易由各 *ApiMgr 處理。
 // （ECP 對話紀錄走 Api/ChainseaApiMgr，由 BaseFlow 每輪寫入。）
@@ -102,6 +104,14 @@ class Ai3Api {
 
     queryDeductionCard(payload) {
         return deductionCardApiMgr.query(payload);
+    }
+
+    queryChangeMembershipInit(payload) {
+        return changeMembershipInitApiMgr.query(payload);
+    }
+
+    submitChangeMembership(payload) {
+        return changeMembershipApplicationApiMgr.saveApplication(payload);
     }
 }
 

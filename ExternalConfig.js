@@ -165,5 +165,24 @@ module.exports = {
         Product: { Url: 'https://prod-host/api/member/coach-payment-history' },
         development: { Url: 'https://dev-host/api/member/coach-payment-history' },
         Qbi: { Url: './data/CoachPaymentHistoryQbiResponse.json' }
+    },
+
+    // TODO(客戶提供)：會籍合約異動申辦初始頁資料（FF-04-01 升等表單預帶），客戶尚未提供 API 規格，先用 Qbi mock。
+    ChangeMembershipInitQuery: {
+        Product: { Url: 'https://prod-host/api/member/change-membership-init' },
+        development: { Url: 'https://dev-host/api/member/change-membership-init' },
+        Qbi: { Url: './data/ChangeMembershipInitQbiResponse.json' }
+    },
+
+    // 會籍資格升等（FF-04-01）設定。
+    //   AllowedContractStatus：可申請的合約狀態代碼（1 已結帳、7 已審核＝當前生效中）——假設，待 PM 確認 Q15。
+    //   WorkingDaysBeforeActivation／Holidays：啟用日＝申請日後數滿 N 個工作日再往後一天。工作日只排除週六日，
+    //   國定假日先不排除（2026-09-23 決定），Holidays 保持空陣列；日後要排除時填 'YYYY-MM-DD'。
+    //   DualRegionEnabled：雙區卡為未來規劃，上線前隱藏（false）——待 PM 確認 Q6。
+    ChangeMembership: {
+        AllowedContractStatus: ['1', '7'],
+        WorkingDaysBeforeActivation: 3,
+        Holidays: [],
+        DualRegionEnabled: false
     }
 };

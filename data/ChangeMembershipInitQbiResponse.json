@@ -1,0 +1,84 @@
+{
+    "status_code": "0000",
+    "data": [
+        {
+            "key": "TEST0001",
+            "memberCode": "M0000001",
+            "name": "測試會員一",
+            "contactPhone": "0912345678",
+            "contactEmail": "test0001@example.com",
+            "contracts": [
+                { "contractNo": "CFM20230115093244017", "cardName": "4", "membership": "1", "storeCode": "PW048", "contractStatus": "2", "startDate": "2023-01-20", "endDate": "2024-01-19" },
+                { "contractNo": "CFM20250610150231093", "cardName": "1", "membership": "1", "storeCode": "PW046", "contractStatus": "7", "startDate": "2025-06-18", "endDate": "2026-08-17" }
+            ]
+        },
+        {
+            "key": "TEST0002",
+            "memberCode": "M0000002",
+            "name": "測試會員二",
+            "contactPhone": "0922333444",
+            "contactEmail": "",
+            "contracts": [
+                { "contractNo": "CFM20250302110522581", "cardName": "4", "membership": "2", "storeCode": "PW066", "contractStatus": "1", "startDate": "2025-03-05", "endDate": "2026-12-04" }
+            ]
+        },
+        {
+            "key": "TEST0003",
+            "memberCode": "M0000003",
+            "name": "測試會員三",
+            "contactPhone": "0933444555",
+            "contactEmail": "test0003@example.com",
+            "contracts": [
+                { "contractNo": "CFM20250801083311204", "cardName": "6", "membership": "7", "storeCode": "PW007", "contractStatus": "7", "startDate": "2025-08-05", "endDate": "2026-12-04" }
+            ]
+        },
+        {
+            "key": "TEST0004",
+            "memberCode": "M0000004",
+            "name": "測試會員四",
+            "contactPhone": "0944555666",
+            "contactEmail": "",
+            "contracts": [
+                { "contractNo": "CFM20240302110599999", "cardName": "13", "membership": "4", "storeCode": "PW029", "contractStatus": "6", "startDate": "2024-03-05", "endDate": "2026-03-04" }
+            ]
+        },
+        {
+            "key": "TEST0005",
+            "memberCode": "M0000005",
+            "name": "測試會員五",
+            "contactPhone": "0955666777",
+            "contactEmail": "",
+            "contracts": []
+        },
+        {
+            "key": "TEST0006",
+            "memberCode": "M0000006",
+            "name": "測試會員六",
+            "contactPhone": "0966777888",
+            "contactEmail": "",
+            "contracts": [
+                { "contractNo": "CFM20251001101010101", "cardName": "13", "membership": "1", "storeCode": "PW086", "contractStatus": "7", "startDate": "2025-10-01", "endDate": "2026-09-30" }
+            ]
+        },
+        {
+            "key": "TEST0007",
+            "memberCode": "M0000007",
+            "name": "測試會員七",
+            "contactPhone": "0977888999",
+            "contactEmail": "test0007@example.com",
+            "contracts": [
+                { "contractNo": "CFM20250505050505050", "cardName": "13", "membership": "6", "storeCode": "PX001", "contractStatus": "1", "startDate": "2025-05-05", "endDate": "2026-11-04" }
+            ]
+        },
+        {
+            "key": "TEST0008",
+            "memberCode": "M0000008",
+            "name": "測試會員八",
+            "contactPhone": "0988999000",
+            "contactEmail": "",
+            "contracts": [
+                { "contractNo": "CFM20220101010101010", "cardName": "1", "membership": "3", "storeCode": "PW013", "contractStatus": "2", "startDate": "2022-01-01", "endDate": "2023-01-01" }
+            ]
+        }
+    ]
+}
