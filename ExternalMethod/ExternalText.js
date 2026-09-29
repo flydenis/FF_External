@@ -820,6 +820,51 @@ var ExternalText = {
         InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
         SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
         Cancelled: '已為您取消本次申請。'
+    },
+
+    // 會籍資格升等（FF-04-01）— 純 Web 表單式。第一階段只開放「會籍資格升等」；
+    // 轉館／轉館加升等先 enabled:false（不顯示），第二階段打開並補表單。
+    ChangeMembershipFlow: {
+        TypeAsk: '請選擇要申辦的項目：',
+        TypeButtons: [
+            { label: '會籍資格升等', submit: 'UPGRADE', style: 'Primary', enabled: true },
+            { label: '會籍廠館轉移', submit: 'TRANSFER', style: 'Secondary', enabled: false },
+            { label: '廠館轉移加卡別升等', submit: 'TRANSFER_UPGRADE', style: 'Secondary', enabled: false }
+        ],
+        // 申辦項目 → ECP U_ChangeType 代碼（ECP 字典「健身工廠_會籍異動類型」：U 升等、T 轉館、A 升等加轉館）。
+        ChangeTypeCode: { UPGRADE: 'U', TRANSFER: 'T', TRANSFER_UPGRADE: 'A' },
+        TypeInvalid: '請點選要申辦的項目。',
+
+        IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
+        IdentityButtons: [
+            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
+            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+        ],
+        IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
+
+        // 本人表單觸發旗標（前端 FormFlow 依此開表單）與預帶資料的 parameters key（前端從 context.parameters 讀取）。
+        FormFlag: 'ChangeMembershipForm',
+        DataKey: 'ChangeMembershipData',
+        PayOptions: [
+            { value: 'C', label: '信用卡' },
+            { value: 'T', label: '轉帳' }
+        ],
+
+        // 合約狀態代碼 6＝行政終止（需求書 p.30）。
+        AdminTerminatedStatus: '6',
+        AdminTerminated: '合約欠款，請洽會員服務中心。',
+        NoContract: '無符合合約狀態資訊，若有相關問題請洽會員服務中心。',
+        NoUpgradeOption: '您目前的會籍已是最高等級，沒有可升等的卡別。若有相關問題請洽會員服務中心。',
+
+        Cancelled: '已為您取消本次申請。',
+        SubmitInvalid: '表單資料不完整或有誤，請確認後重新申請。',
+        SubmitFailed: '申請送出失敗，請稍後再試，或聯繫客服協助。',
+        SubmitDone: '線上申請需約三個工作日，受理結果將依您選擇之聯絡方式通知，若有特殊情形將有專人與您聯繫，謝謝。',
+
+        // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
+        // TODO(PM 確認)：ApplicationType 須與 ECP 代理人申辦單元的下拉值逐字一致（需求書 p.77 代碼 4）。
+        ApplicationType: '會籍升等/轉館/轉館加升等',
+        ToAgentValue: 'ToAgentOfChangeMembershipFlow'
     }
 };
 
