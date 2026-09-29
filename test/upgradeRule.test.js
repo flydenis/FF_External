@@ -81,6 +81,14 @@ t('轉館加升等：區域金卡 → 只剩全國白金（雙區隱藏）', () 
 t('轉館加升等：全國白金 → 無選項', () => assert.deepStrictEqual(trCodes({ cardName: '6', membership: '7' }), []));
 t('轉館加升等：澎湖馬公單館也能選區卡（區域自選）', () => assert.ok(trCodes({ cardName: '1', membership: '1' }).includes('4:region:2')));
 
+// 轉館寫 ECP 的字典值（TransferDictMap，2026-09-29 ECP 查詢結果）
+const DM = require('../ExternalMethod/TransferDictMap');
+const Stores = require('../ExternalMethod/StoreRegion');
+t('字典：87 館的縣市都對得到 ECP 縣市代碼', () => assert.ok(Object.values(Stores).every(s => DM.cityValue(s.city))));
+t('字典：87 館的區域與 ECP 縣市上級區域一致', () => assert.ok(Object.values(Stores).every(s => DM.areaValue(s.region) === DM.CITY_AREA[s.city])));
+t('字典：台北信義 → 區域 A、縣市 3', () => assert.deepStrictEqual([DM.areaValue(Stores.PX001.region), DM.cityValue(Stores.PX001.city)], ['A', '3']));
+t('字典：澎湖馬公 → 區域 F 不分區、縣市 18', () => assert.deepStrictEqual([DM.areaValue(Stores.PW086.region), DM.cityValue(Stores.PW086.city)], ['F', '18']));
+
 // 啟用日
 t('啟用日：9/23（三）申請 → 最早 9/29（二）', () => assert.strictEqual(R.minActivationDate('2026-09-23'), '2026-09-29'));
 t('啟用日：9/25 放假 → 最早 9/30（三）', () => assert.strictEqual(R.minActivationDate('2026-09-23', { holidays: ['2026-09-25'] }), '2026-09-30'));
