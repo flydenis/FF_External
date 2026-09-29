@@ -31,6 +31,7 @@ const ContractQueryFlow = require('./ExternalFlow/ContractQueryFlow');
 const ApplicationProgressQueryFlow = require('./ExternalFlow/ApplicationProgressQueryFlow');
 const CoachApplicationProgressQueryFlow = require('./ExternalFlow/CoachApplicationProgressQueryFlow');
 const ActiveLeaveRecordsFlow = require('./ExternalFlow/ActiveLeaveRecordsFlow');
+const PauseEarlyOpenFlow = require('./ExternalFlow/PauseEarlyOpenFlow');
 const CoachContractQueryFlow = require('./ExternalFlow/CoachContractQueryFlow');
 const CoachPaymentHistoryQueryFlow = require('./ExternalFlow/CoachPaymentHistoryQueryFlow');
 const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
@@ -124,6 +125,7 @@ app.post('/ContractQueryFlow', (req, res) => runFlow({ req, res, FlowClass: Cont
 app.post('/ApplicationProgressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: ApplicationProgressQueryFlow, flowName: 'ApplicationProgressQueryFlow' }));
 app.post('/CoachApplicationProgressQueryFlow', (req, res) => runFlow({ req, res, FlowClass: CoachApplicationProgressQueryFlow, flowName: 'CoachApplicationProgressQueryFlow' }));
 app.post('/ActiveLeaveRecordsFlow', (req, res) => runFlow({ req, res, FlowClass: ActiveLeaveRecordsFlow, flowName: 'ActiveLeaveRecordsFlow' }));
+app.post('/PauseEarlyOpenFlow', (req, res) => runFlow({ req, res, FlowClass: PauseEarlyOpenFlow, flowName: 'PauseEarlyOpenFlow' }));
 app.post('/CoachContractQueryFlow', (req, res) => runFlow({ req, res, FlowClass: CoachContractQueryFlow, flowName: 'CoachContractQueryFlow' }));
 app.post('/CoachPaymentHistoryQueryFlow', (req, res) => runFlow({ req, res, FlowClass: CoachPaymentHistoryQueryFlow, flowName: 'CoachPaymentHistoryQueryFlow' }));
 
