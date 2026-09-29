@@ -64,10 +64,10 @@ var ExternalText = {
         MembershipStopCode: { Pause: 'S', Extend: 'E' },
 
         // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
-        // ToAgentValue 標明是「哪一支外部流程」呼叫 AgentFlow（送件後回 parameters:{ ToAgent: <此值> }），
-        // 之後打 ECP 也會用到此值（屆時轉成對應中文再送）。其他流程重用 AgentFlow 時各自填自己的值。
-        // TODO(PM 確認)：ApplicationType 須與內部系統下拉選單「會籍暫停(請假/延展)」逐字一致；暫停/延展是否需帶不同值待確認，目前共用同一值。
-        ApplicationType: '會籍暫停(請假/延展)',
+        // ToAgentValue 標明是「哪一支外部流程」呼叫 AgentFlow（送件後回 parameters:{ ToAgent: <此值> }）。
+        // ApplicationType 依規格書 TpCUSmAgentApplication 的 U_ApplicationType 代碼表：5＝會籍暫停(請假/延展)
+        // （代碼表：1個資變更、2扣款卡片變更、3提前開啟請假會籍、4會籍升等/轉館/轉館加升等、5會籍暫停(請假/延展)、6會籍解約取消退會、7教練課程解約/取消解約）。
+        ApplicationType: '5',
         ToAgentValue: 'ToAgentOfLeaveFlow'
     },
 
@@ -88,8 +88,8 @@ var ExternalText = {
         Cancelled: '已為您取消本次申請。',
 
         // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
-        // TODO(PM 確認)：ApplicationType 須與內部系統下拉選單逐字一致，目前先沿用「教練合約解約」佔位。
-        ApplicationType: '教練合約解約',
+        // ApplicationType 依規格書 U_ApplicationType 代碼表：7＝教練課程解約/取消解約（見 LeaveFlow.ApplicationType 註解的完整代碼表）。
+        ApplicationType: '7',
         ToAgentValue: 'ToAgentOfCoachContractTerminationFlow'
     },
 
@@ -110,9 +110,34 @@ var ExternalText = {
         Cancelled: '已為您取消本次申請。',
 
         // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
-        // TODO(PM 確認)：ApplicationType 須與內部系統下拉選單逐字一致，目前先沿用「會籍解約」佔位。
-        ApplicationType: '會籍解約',
+        // ApplicationType 依規格書 U_ApplicationType 代碼表：6＝會籍解約取消退會（見 LeaveFlow.ApplicationType 註解的完整代碼表）。
+        ApplicationType: '6',
         ToAgentValue: 'ToAgentOfMembershipTerminationFlow'
+    },
+
+    // 提前開啟請假會籍申請流程（FF-04-05）— 純 Web 表單式。C010 問身分 → C020 分派（本人自處理 / 代理人交共用 AgentFlow）。
+    PauseEarlyOpenFlow: {
+        IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
+        IdentityButtons: [
+            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
+            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+        ],
+        IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
+
+        // 本人表單觸發旗標（C020 只回 parameters:{ PauseEarlyOpenForm:'PauseEarlyOpenForm' }，
+        // 前端 PauseEarlyOpenForm.js 據此自繪表單）。
+        SelfFormFlag: 'PauseEarlyOpenForm',
+        SelfDone: '單號建置完成，若還有疑問請聯繫客服。',
+        SelfInvalid: '表單資料不完整，請確認後重新送出。',
+        Cancelled: '已為您取消本次申請。',
+
+        // 開啟使用日期僅能選申請日 7 天後（規格書：因應申請工作天，線上表單僅能填選七日後日期）。
+        MinOpenDateOffsetDays: 7,
+
+        // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
+        // ApplicationType 依規格書 U_ApplicationType 代碼表：3＝提前開啟請假會籍（見 LeaveFlow.ApplicationType 註解的完整代碼表）。
+        ApplicationType: '3',
+        ToAgentValue: 'ToAgentOfPauseEarlyOpenFlow'
     },
 
     // 共用「代理他人申辦」子流程（AgentFlow）——供各申請流程重用，只維護這一支。
