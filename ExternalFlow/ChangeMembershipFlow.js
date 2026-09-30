@@ -88,7 +88,7 @@ class ChangeMembershipFlow extends IntentBaseFlow {
         }
         if (this.changeType !== 'T' && !options.length) {
             this.logger.InfoLog(`[${this.FlowName}] C020 無可升選項（type=${this.changeType}, card=${contract.cardName}, membership=${contract.membership}）`);
-            return this.reply({ message: this.changeType === 'A' ? T.NoTransferUpgradeOption : T.NoUpgradeOption, isContinuum: '0' });
+            return this.reply({ message: this.noOptionMessage(contract), isContinuum: '0' });
         }
 
         const applyDate = UpgradeRule.toISODate(new Date());
@@ -232,6 +232,13 @@ class ChangeMembershipFlow extends IntentBaseFlow {
     // TODO(PM 確認 Q13)：會員識別暫由 customerData.memberKey 帶入（比照其他流程），待 APP 登入身分傳遞方式定案後調整。
     memberKey() {
         return this.customerData && this.customerData.memberKey;
+    }
+
+    // 沒有可升選項時的提示。A 不含全國白金：還能升全國白金的會員（如區域金卡）引導改走升等；已是全國白金則引導改走轉館。
+    noOptionMessage(contract) {
+        if (this.changeType !== 'A') return T.NoUpgradeOption;
+        const canUpgrade = UpgradeRule.getUpgradeOptions({ cardName: contract.cardName, membership: contract.membership, storeCode: contract.storeCode }).length > 0;
+        return canUpgrade ? T.NoTransferUpgradeOptionTryUpgrade : T.NoTransferUpgradeOption;
     }
 
     settings() {

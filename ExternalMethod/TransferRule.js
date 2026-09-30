@@ -25,9 +25,11 @@ const REGION_ORDER = ['6', '5', '4', '3', '2'];
 
 // 轉館加升等可選項目：卡別×範圍的升等規則沿用 UpgradeRule（需求書 p.22 對照表），
 // 區域型選項由會員自選區域，每區各一個選項（新文件 p.20）。雙區卡上線前隱藏，這裡不提供（Q6）。
-// 選項 code：單館／全國＝「卡別:範圍」，區域＝「卡別:region:區域代碼」。
+// 全國白金不列（SA 2026-09-30：只能升等到全國白金，不能轉館加升等到全國白金；要升全國白金請走 U）。
+// 選項 code：單館＝「卡別:single」，區域＝「卡別:region:區域代碼」。
 function getTransferUpgradeOptions({ cardName, membership }) {
-    const pairs = UpgradeRule.getUpgradeOptions({ cardName, membership, regionOverride: '6', dualRegionEnabled: false });
+    const pairs = UpgradeRule.getUpgradeOptions({ cardName, membership, regionOverride: '6', dualRegionEnabled: false })
+        .filter(p => p.scope !== 'national');
     const options = [];
     pairs.forEach(p => {
         if (p.scope !== 'region') { options.push(p); return; }

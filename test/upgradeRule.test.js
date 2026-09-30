@@ -73,11 +73,11 @@ t('轉館：新館清單不含原廠館', () => assert.ok(!TR.venueChoices({ exc
 t('轉館：新館清單共 86 館（87 館扣原館）', () => assert.strictEqual(TR.venueChoices({ excludeStoreCode: 'PW046' }).length, 86));
 t('轉館加升等：選北區只列北區館＋澎湖馬公', () => assert.ok(TR.venueChoices({ region: '6' }).every(v => v.region === '6' || v.code === 'PW086')));
 t('轉館加升等：北區館清單含澎湖馬公', () => assert.ok(TR.venueChoices({ region: '6' }).some(v => v.code === 'PW086')));
-t('轉館加升等：單館銀卡 → 單館金、各區銀、各區金、全國白金', () => assert.deepStrictEqual(trCodes({ cardName: '1', membership: '1' }),
-    ['4:single', '1:region:6', '1:region:5', '1:region:4', '1:region:3', '1:region:2', '4:region:6', '4:region:5', '4:region:4', '4:region:3', '4:region:2', '6:national']));
-t('轉館加升等：單館金卡 → 各區金、全國白金', () => assert.deepStrictEqual(trCodes({ cardName: '4', membership: '1' }),
-    ['4:region:6', '4:region:5', '4:region:4', '4:region:3', '4:region:2', '6:national']));
-t('轉館加升等：區域金卡 → 只剩全國白金（雙區隱藏）', () => assert.deepStrictEqual(trCodes({ cardName: '4', membership: '2' }), ['6:national']));
+t('轉館加升等：單館銀卡 → 單館金、各區銀、各區金（不含全國白金）', () => assert.deepStrictEqual(trCodes({ cardName: '1', membership: '1' }),
+    ['4:single', '1:region:6', '1:region:5', '1:region:4', '1:region:3', '1:region:2', '4:region:6', '4:region:5', '4:region:4', '4:region:3', '4:region:2']));
+t('轉館加升等：單館金卡 → 各區金（不含全國白金）', () => assert.deepStrictEqual(trCodes({ cardName: '4', membership: '1' }),
+    ['4:region:6', '4:region:5', '4:region:4', '4:region:3', '4:region:2']));
+t('轉館加升等：區域金卡 → 無選項（全國白金只能走升等）', () => assert.deepStrictEqual(trCodes({ cardName: '4', membership: '2' }), []));
 t('轉館加升等：全國白金 → 無選項', () => assert.deepStrictEqual(trCodes({ cardName: '6', membership: '7' }), []));
 t('轉館加升等：澎湖馬公單館也能選區卡（區域自選）', () => assert.ok(trCodes({ cardName: '1', membership: '1' }).includes('4:region:2')));
 

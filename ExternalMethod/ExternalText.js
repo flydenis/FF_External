@@ -856,6 +856,7 @@ var ExternalText = {
         NoContract: '無符合合約狀態資訊，若有相關問題請洽會員服務中心。',
         NoUpgradeOption: '您目前的會籍已是最高等級，沒有可升等的卡別。若有相關問題請洽會員服務中心。',
         NoTransferUpgradeOption: '您目前的會籍已是最高等級，沒有可升等的卡別；如需更換主要使用廠館，請改選「會籍廠館轉移」。',
+        NoTransferUpgradeOptionTryUpgrade: '廠館轉移加卡別升等可升等至單館金卡或區域卡，您目前的會籍沒有可選的項目；如需升等全國白金卡，請改選「會籍資格升等」；如需更換主要使用廠館，請改選「會籍廠館轉移」。',
 
         Cancelled: '已為您取消本次申請。',
         SubmitInvalid: '表單資料不完整或有誤，請確認後重新申請。',

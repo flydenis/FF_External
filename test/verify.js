@@ -96,7 +96,7 @@ const SCENARIOS = [
     { name: '轉館加升等 happy path（單館銀卡 → 區域金卡北區＋台北信義）', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
         { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1', includes: ['本人申辦'] } },
-        { input: 'SELF', expect: { isContinuum: '1', includes: ['"changeType":"A"', '4:region:6', '4:region:2', '4:single', '6:national'], excludes: ['"code":"PW046"', '1:single'] } },
+        { input: 'SELF', expect: { isContinuum: '1', includes: ['"changeType":"A"', '4:region:6', '4:region:2', '4:single'], excludes: ['"code":"PW046"', '1:single', '6:national'] } },
         { input: form({ upgradeOption: '4:region:6', newVenue: 'PX001' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
     ], check: () => {
         const r = saved[saved.length - 1];
@@ -126,6 +126,17 @@ const SCENARIOS = [
         { input: '開始', expect: { isContinuum: '1' } },
         { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
         { input: 'SELF', expect: { isContinuum: '0', includes: ['會籍廠館轉移'] } }
+    ] },
+    { name: '轉館加升等：區域金卡 → 無可選項並提示改走升等／轉館（A 不含全國白金）', member: 'TEST0002', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '0', includes: ['會籍資格升等', '會籍廠館轉移'], excludes: ['最高等級'] } }
+    ] },
+    { name: '轉館加升等：送全國白金 → 核實不過', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '6:national', newVenue: 'PX001' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '取消申請', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
