@@ -889,8 +889,8 @@ var ExternalText = {
         SubmitDone: '線上申請需約三個工作日，受理結果將依您選擇之聯絡方式通知，若有特殊情形將有專人與您聯繫，謝謝。',
 
         // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
-        // TODO(PM 確認)：ApplicationType 須與 ECP 代理人申辦單元的下拉值逐字一致（需求書 p.77 代碼 4）。
-        ApplicationType: '會籍升等/轉館/轉館加升等',
+        // ApplicationType 依規格書 U_ApplicationType 代碼表：4＝會籍升等/轉館/轉館加升等（見 LeaveFlow.ApplicationType 註解的完整代碼表）。
+        ApplicationType: '4',
         ToAgentValue: 'ToAgentOfChangeMembershipFlow'
     }
 };

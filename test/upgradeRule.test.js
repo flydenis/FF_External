@@ -89,6 +89,9 @@ t('字典：87 館的區域與 ECP 縣市上級區域一致', () => assert.ok(Ob
 t('字典：台北信義 → 區域 A、縣市 3', () => assert.deepStrictEqual([DM.areaValue(Stores.PX001.region), DM.cityValue(Stores.PX001.city)], ['A', '3']));
 t('字典：澎湖馬公 → 區域 F 不分區、縣市 18', () => assert.deepStrictEqual([DM.areaValue(Stores.PW086.region), DM.cityValue(Stores.PW086.city)], ['F', '18']));
 
+// 代理人申辦類型（U_ApplicationType 代碼表：4＝會籍升等/轉館/轉館加升等）
+t('代理人申辦類型：升等流程帶代碼 4', () => assert.strictEqual(require('../ExternalMethod/ExternalText').ChangeMembershipFlow.ApplicationType, '4'));
+
 // 啟用日
 t('啟用日：9/23（三）申請 → 最早 9/29（二）', () => assert.strictEqual(R.minActivationDate('2026-09-23'), '2026-09-29'));
 t('啟用日：9/25 放假 → 最早 9/30（三）', () => assert.strictEqual(R.minActivationDate('2026-09-23', { holidays: ['2026-09-25'] }), '2026-09-30'));
