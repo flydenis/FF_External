@@ -1,4 +1,5 @@
 const { createEcpApplicationMgr } = require('./EcpApplicationMgr');
+const TransferDictMap = require('../ExternalMethod/TransferDictMap');
 
 // 會籍升等/轉館/轉館加升等申請（本人申辦）寫入 ECP。共用建單邏輯在 EcpApplicationMgr，
 // 這裡只負責 savePath／entityUnitId 與表單欄位 → ECP 欄位（CUS.ChangeMembership）的對應。
@@ -16,8 +17,11 @@ class ChangeMembershipApplicationApiMgr {
     //   異動類型 -> U_ChangeType（U 升等／T 轉館／A 轉館加升等）、升等卡別 -> U_UpCardType（card_name 代碼）
     //   啟用日 -> U_NewActDate、繳費方式 -> U_PayType（C／T）、統編 -> U_CompanyUnified（有填才送）
     //   表單狀態 -> U_Status：W（待處理，照需求書；ECP 字典改正前須先通知同事）
-    //   升等後資格 -> U_Remark（ECP 尚無對應欄位，待 SA 確認 Q11 前的暫時做法）
-    async saveApplication({ memberCode, memberName, contractNo, applyTime, contactType, contactValue, changeType, upCardType, actDate, payType, taxId, remark, logger }) {
+    //   升等後會員資格 -> U_UpMembership；原卡別／原會員資格／原可用分館 -> U_OldCardType／U_OldMembership／U_OldAvailableVenue
+    //   （4 欄 2026-09-29 於 ECP 試建，待 SA 確認 Q11／Q12；ExternalConfig.ChangeMembership.WriteDetailFields 關掉即不送）
+    //   備註 -> U_Remark：升等前後的文字說明，方便客服閱讀
+    //   新主要使用廠館（轉館／轉館加升等）-> U_TransNewVenue1（store_code）、U_TransCity1／U_TransArea1（轉成 ECP 字典值，見 TransferDictMap）
+    async saveApplication({ memberCode, memberName, contractNo, applyTime, contactType, contactValue, changeType, upCardType, actDate, payType, taxId, remark, detail, transfer, logger }) {
         const record = {
             U_MemberCode: memberCode,
             FName: memberName,
@@ -25,15 +29,28 @@ class ChangeMembershipApplicationApiMgr {
             FCreateTime: applyTime,
             U_ChangeDate: applyTime,
             U_ChangeType: changeType,
-            U_UpCardType: upCardType,
             U_NewActDate: actDate,
             U_PayType: payType,
             U_Status: 'W'
         };
+        if (upCardType) record.U_UpCardType = upCardType;
         if (contactType === 'phone') record.U_ContactPhone = contactValue;
         else if (contactType === 'email') record.U_ContactEmail = contactValue;
         if (taxId) record.U_CompanyUnified = taxId;
         if (remark) record.U_Remark = remark;
+        if (transfer) {
+            record.U_TransNewVenue1 = transfer.storeCode;
+            const city = TransferDictMap.cityValue(transfer.city);
+            const area = TransferDictMap.areaValue(transfer.region);
+            if (city) record.U_TransCity1 = city;
+            if (area) record.U_TransArea1 = area;
+        }
+        if (detail) {
+            if (detail.upMembership) record.U_UpMembership = detail.upMembership;
+            if (detail.oldCardType) record.U_OldCardType = detail.oldCardType;
+            if (detail.oldMembership) record.U_OldMembership = detail.oldMembership;
+            if (detail.oldAvailableVenue) record.U_OldAvailableVenue = detail.oldAvailableVenue;
+        }
         return mgr.saveApplication(record, logger);
     }
 }
