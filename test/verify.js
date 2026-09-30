@@ -37,7 +37,7 @@ const form = (extra) => JSON.stringify({
 // expect：isContinuum、includes（message 須含的字）、excludes（不可含的字）、saved（到此為止累計寫入 ECP 的筆數）
 const SCENARIOS = [
     { name: '本人升等 happy path（單館銀卡 → 區域金卡）', member: 'TEST0001', turns: [
-        { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['請選擇要申辦的項目', 'UPGRADE'] } },
+        { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['請選擇要申辦的項目', 'submit="會籍資格升等"'] } },
         { input: 'UPGRADE', expect: { isContinuum: '1', includes: ['本人申辦', '代理他人申辦'] } },
         { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', 'CFM20250610150231093', '4:region', '單館銀卡（屏東潮州）', minDate] } },
         { input: form(), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'], saved: 1 } }
@@ -59,7 +59,7 @@ const SCENARIOS = [
         { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['本人申辦'] } }
     ] },
     { name: '申辦項目三選一都出現', member: 'TEST0001', turns: [
-        { input: '開始', expect: { isContinuum: '1', includes: ['UPGRADE', 'TRANSFER', 'TRANSFER_UPGRADE'] } },
+        { input: '開始', expect: { isContinuum: '1', includes: ['submit="會籍資格升等"', 'submit="會籍廠館轉移"', 'submit="廠館轉移加卡別升等"'] } },
         { input: '亂打', expect: { isContinuum: '1', includes: ['請點選要申辦的項目'] } }
     ] },
     // ---- 會籍廠館轉移（T）----
@@ -200,10 +200,20 @@ const SCENARIOS = [
         { input: 'UPGRADE', expect: { isContinuum: '1' } },
         { input: 'SELF', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
     ] },
-    { name: '沒帶會員識別 → 無符合合約狀態（不誤帶別人資料）', member: '', turns: [
+    { name: '沒帶會員識別＋未設 Qbi 預設會員 → 無符合合約狀態（不誤帶別人資料）', member: '', qbiDefault: '', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
         { input: 'UPGRADE', expect: { isContinuum: '1' } },
         { input: 'SELF', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
+    ] },
+    { name: '沒帶會員識別＋Qbi 預設會員 TEST0001 → 可開表單（測試 WebChat 未登入用）', member: '', qbiDefault: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1', includes: ['submit="會籍資格升等"', 'submit="會籍廠館轉移"'], excludes: ['background-color:#2563eb', 'submit="UPGRADE"'] } },
+        { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['submit="本人申辦"'] } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['ChangeMembershipForm'] } }
+    ] },
+    { name: '舊的英文代碼仍可用（測試平台打 UPGRADE／SELF）', member: '', qbiDefault: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', 'M0000001'] } }
     ] },
     { name: '代理他人申辦 → 交給代理人表單', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
@@ -258,6 +268,9 @@ function check(resp, expect) {
     for (const sc of SCENARIOS) {
         const chatId = `verify-${Date.now()}-${crypto.randomInt(1000, 9999)}`;
         saveShouldFail = !!sc.failSave;
+        const cm = ExternalConfig.ChangeMembership;
+        const prevDefault = cm.QbiDefaultMemberKey;
+        if ('qbiDefault' in sc) cm.QbiDefaultMemberKey = sc.qbiDefault;
         let detail = '';
         for (let i = 0; i < sc.turns.length && !detail; i++) {
             const t = sc.turns[i];
@@ -265,6 +278,7 @@ function check(resp, expect) {
             const fails = check(resp, t.expect);
             if (fails.length) detail = `第${i + 1}輪：` + fails.join('；');
         }
+        cm.QbiDefaultMemberKey = prevDefault;
         if (!detail && sc.check) detail = sc.check();
         if (!detail) { pass++; console.log(`  [PASS] ${sc.name}`); }
         else { fail++; console.log(`  [FAIL] ${sc.name} — ${detail}`); }

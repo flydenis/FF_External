@@ -186,6 +186,9 @@ module.exports = {
         WorkingDaysBeforeActivation: 3,
         Holidays: [],
         DualRegionEnabled: false,
-        WriteDetailFields: true
+        WriteDetailFields: true,
+        // QbiDefaultMemberKey：只在 Mode='Qbi'（mock 測試）且進線沒帶 customerData.memberKey 時使用的假會員，
+        //   讓未登入的測試 WebChat 也能走完流程（Q13 會員身分傳遞方式未定案前）。正式模式不使用；設 '' 即停用。
+        QbiDefaultMemberKey: 'TEST0001'
     }
 };
