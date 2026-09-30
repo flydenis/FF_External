@@ -896,7 +896,7 @@ var ExternalText = {
     ChangeMembershipFlow: {
         TypeAsk: '請選擇要申辦的項目：',
         TypeButtons: [
-            { label: '會籍資格升等', submit: 'UPGRADE', style: 'Primary', enabled: true },
+            { label: '會籍資格升等', submit: 'UPGRADE', style: 'Secondary', enabled: true },
             { label: '會籍廠館轉移', submit: 'TRANSFER', style: 'Secondary', enabled: true },
             { label: '廠館轉移加卡別升等', submit: 'TRANSFER_UPGRADE', style: 'Secondary', enabled: true }
         ],

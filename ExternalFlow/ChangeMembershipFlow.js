@@ -230,8 +230,11 @@ class ChangeMembershipFlow extends IntentBaseFlow {
     }
 
     // TODO(PM 確認 Q13)：會員識別暫由 customerData.memberKey 帶入（比照其他流程），待 APP 登入身分傳遞方式定案後調整。
+    // Qbi（mock 測試）模式下沒帶 memberKey 時改用 QbiDefaultMemberKey，正式模式維持查無（不誤帶他人資料）。
     memberKey() {
-        return this.customerData && this.customerData.memberKey;
+        const key = this.customerData && this.customerData.memberKey;
+        if (key) return key;
+        return ExternalConfig.Mode === 'Qbi' ? (this.settings().QbiDefaultMemberKey || undefined) : undefined;
     }
 
     // 沒有可升選項時的提示。A 不含全國白金：還能升全國白金的會員（如區域金卡）引導改走升等；已是全國白金則引導改走轉館。
@@ -274,6 +277,12 @@ class ChangeMembershipFlow extends IntentBaseFlow {
     }
 
     // 比對 Web 按鈕的 submit 值或按鈕文字（HTML 按鈕點擊後平台把 submit 值當 ask_input 回送）。
+    // 按鈕送出值改用中文 label，WebChat 使用者泡泡才會顯示「會籍資格升等」而不是「UPGRADE」。
+    // 只在本流程覆寫（IntentBaseFlow.buildButtons 其他流程共用，不動）；parseButtonCode 本來就同時認 label 與 submit。
+    buildButtons(buttons, style) {
+        return super.buildButtons((buttons || []).map(b => ({ ...b, submit: b.label })), style);
+    }
+
     parseButtonCode(input, buttons) {
         const raw = String(input == null ? '' : input).trim();
         const hit = (buttons || []).find(b => raw === b.submit || raw === b.label);
