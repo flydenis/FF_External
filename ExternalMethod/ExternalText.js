@@ -898,9 +898,9 @@ var ExternalText = {
     ChangeMembershipFlow: {
         TypeAsk: '請選擇要申辦的項目：',
         TypeButtons: [
-            { label: '會籍資格升等', submit: 'UPGRADE', style: 'Secondary', enabled: true },
-            { label: '會籍廠館轉移', submit: 'TRANSFER', style: 'Secondary', enabled: true },
-            { label: '廠館轉移加卡別升等', submit: 'TRANSFER_UPGRADE', style: 'Secondary', enabled: true }
+            { label: '會籍資格升等', submit: '會籍資格升等', style: 'Secondary', enabled: true },
+            { label: '會籍廠館轉移', submit: '會籍廠館轉移', style: 'Secondary', enabled: true },
+            { label: '廠館轉移加卡別升等', submit: '廠館轉移加卡別升等', style: 'Secondary', enabled: true }
         ],
         // 申辦項目 → ECP U_ChangeType 代碼（ECP 字典「健身工廠_會籍異動類型」：U 升等、T 轉館、A 升等加轉館）。
         ChangeTypeCode: { '會籍資格升等': 'U', '會籍廠館轉移': 'T', '廠館轉移加卡別升等': 'A' },
