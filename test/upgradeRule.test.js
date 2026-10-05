@@ -55,6 +55,43 @@ t('核實：雙區第二區不同則通過且標示兩區', () => {
     assert.ok(s && s.label.includes('南區') && s.label.includes('北區'));
 });
 
+// 升等後會員資格代碼（U_UpMembership）
+const opt = (card, m, store, code) => R.getUpgradeOptions({ cardName: card, membership: m, storeCode: store }).find(o => o.code === code);
+t('升等後資格：單館金卡 → 1', () => assert.strictEqual(R.membershipAfter(opt('1', '1', 'PW046', '4:single')), '1'));
+t('升等後資格：區域金卡（南區）→ 2', () => assert.strictEqual(R.membershipAfter(opt('1', '1', 'PW046', '4:region')), '2'));
+t('升等後資格：全國白金 → 7', () => assert.strictEqual(R.membershipAfter(opt('1', '1', 'PW046', '6:national')), '7'));
+
+// 可用分館顯示文字（U_OldAvailableVenue，線上表單文件 p.8）
+t('可用分館：單館 → 廠館名稱', () => assert.strictEqual(R.availableVenueText({ membership: '1', storeCode: 'PW046' }), '屏東潮州'));
+t('可用分館：區卡 → **區廠館通用', () => assert.strictEqual(R.availableVenueText({ membership: '3', storeCode: 'PW046' }), '中南區廠館通用'));
+t('可用分館：全國 → 全國廠館通用', () => assert.strictEqual(R.availableVenueText({ membership: '7', storeCode: 'PW007' }), '全國廠館通用'));
+
+// 轉館／轉館加升等（TransferRule）
+const TR = require('../ExternalMethod/TransferRule');
+const trCodes = args => TR.getTransferUpgradeOptions(args).map(o => o.code);
+t('轉館：新館清單不含原廠館', () => assert.ok(!TR.venueChoices({ excludeStoreCode: 'PW046' }).some(v => v.code === 'PW046')));
+t('轉館：新館清單共 86 館（87 館扣原館）', () => assert.strictEqual(TR.venueChoices({ excludeStoreCode: 'PW046' }).length, 86));
+t('轉館加升等：選北區只列北區館＋澎湖馬公', () => assert.ok(TR.venueChoices({ region: '6' }).every(v => v.region === '6' || v.code === 'PW086')));
+t('轉館加升等：北區館清單含澎湖馬公', () => assert.ok(TR.venueChoices({ region: '6' }).some(v => v.code === 'PW086')));
+t('轉館加升等：單館銀卡 → 單館金、各區銀、各區金（不含全國白金）', () => assert.deepStrictEqual(trCodes({ cardName: '1', membership: '1' }),
+    ['4:single', '1:region:6', '1:region:5', '1:region:4', '1:region:3', '1:region:2', '4:region:6', '4:region:5', '4:region:4', '4:region:3', '4:region:2']));
+t('轉館加升等：單館金卡 → 各區金（不含全國白金）', () => assert.deepStrictEqual(trCodes({ cardName: '4', membership: '1' }),
+    ['4:region:6', '4:region:5', '4:region:4', '4:region:3', '4:region:2']));
+t('轉館加升等：區域金卡 → 無選項（全國白金只能走升等）', () => assert.deepStrictEqual(trCodes({ cardName: '4', membership: '2' }), []));
+t('轉館加升等：全國白金 → 無選項', () => assert.deepStrictEqual(trCodes({ cardName: '6', membership: '7' }), []));
+t('轉館加升等：澎湖馬公單館也能選區卡（區域自選）', () => assert.ok(trCodes({ cardName: '1', membership: '1' }).includes('4:region:2')));
+
+// 轉館寫 ECP 的字典值（TransferDictMap，2026-09-29 ECP 查詢結果）
+const DM = require('../ExternalMethod/TransferDictMap');
+const Stores = require('../ExternalMethod/StoreRegion');
+t('字典：87 館的縣市都對得到 ECP 縣市代碼', () => assert.ok(Object.values(Stores).every(s => DM.cityValue(s.city))));
+t('字典：87 館的區域與 ECP 縣市上級區域一致', () => assert.ok(Object.values(Stores).every(s => DM.areaValue(s.region) === DM.CITY_AREA[s.city])));
+t('字典：台北信義 → 區域 A、縣市 3', () => assert.deepStrictEqual([DM.areaValue(Stores.PX001.region), DM.cityValue(Stores.PX001.city)], ['A', '3']));
+t('字典：澎湖馬公 → 區域 F 不分區、縣市 18', () => assert.deepStrictEqual([DM.areaValue(Stores.PW086.region), DM.cityValue(Stores.PW086.city)], ['F', '18']));
+
+// 代理人申辦類型（U_ApplicationType 代碼表：4＝會籍升等/轉館/轉館加升等）
+t('代理人申辦類型：升等流程帶代碼 4', () => assert.strictEqual(require('../ExternalMethod/ExternalText').ChangeMembershipFlow.ApplicationType, '4'));
+
 // 啟用日
 t('啟用日：9/23（三）申請 → 最早 9/29（二）', () => assert.strictEqual(R.minActivationDate('2026-09-23'), '2026-09-29'));
 t('啟用日：9/25 放假 → 最早 9/30（三）', () => assert.strictEqual(R.minActivationDate('2026-09-23', { holidays: ['2026-09-25'] }), '2026-09-30'));

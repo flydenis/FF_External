@@ -342,7 +342,7 @@ var ExternalText = {
         // Card 固定寬度：聊天氣泡容器（.ChatMessageContent）是 inline-block，寬度會依內容縮放，
         // 6 欄表格跟純文字提示語混用時氣泡寬度會跳動，故此卡片改用固定寬度讓各種情境呈現一致大小。
         CardStyle: {
-            Card: 'width:350px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Card: 'width:100%;max-width:350px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
             TitleRow: 'display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             TypeBadge: 'color:#f5a623;font-weight:600;font-size:13px;',
@@ -514,17 +514,31 @@ var ExternalText = {
     },
 
     // 扣款卡片變更申請流程文案（節點以 C010 起編，FF-05-02）。
+    // C010 先問申辦身分（本人／代理人，比照 PersonalDataChangeFlow 等其他申辦類流程的做法）：
+    // 本人 → C030_Self 走原本的表單流程；代理人 → 交共用 AgentFlow 處理到底。
     // FormFlag 對應前端 FormFlow.registerForm('DeductionCardChangeForm', ...) 註冊的 key，
-    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單。藍字／紅字提示語 PM 已確認需在
+    // C020（SELF 分支）回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單。藍字／紅字提示語 PM 已確認需在
     // 對話中顯示（比照 InvoiceInfoChange 的紅字提示語作法，不只是表單內文字）。
     DeductionCardChange: {
+        IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
+        IdentityButtons: [
+            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
+            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+        ],
+        IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
+
         FormFlag: 'DeductionCardChangeForm',
         BlueNotice: '<span style="color:#2563eb;">僅受理卡片扣款人為會員本人者，其他請至廠館櫃台或會員服務中心辦理。</span>',
         RedNotice: '<span style="color:#e5484d;">申請內容請務必確認正確，以維護您的會籍權益。</span>',
         MissingContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
         MissingAuthLetter: '請上傳填妥之信用卡授權書後再送出。',
         SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
-        Cancelled: '已為您取消本次申請。'
+        Cancelled: '已為您取消本次申請。',
+
+        // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
+        // ApplicationType 沿用 ApplicationProgress.CategoryLabels 裡已對過的「扣款卡片變更」字面值。
+        ApplicationType: '扣款卡片變更',
+        ToAgentValue: 'ToAgentOfDeductionCardChangeFlow'
     },
 
     // 會籍合約資料查詢流程文案（節點以 C010 起編，FF-04-00）。
@@ -680,9 +694,10 @@ var ExternalText = {
         Intro: '您目前生效中的請假紀錄：',
         NotFound: '當前無已生效之請假紀錄。',
 
-        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。
+        // 卡片外觀樣式，之後 PM 若要換配色只改這裡，不動流程程式。寬度用 100%+max-width（不是固定 px），
+        // 避免窄螢幕（手機聊天面板實際可用寬度常小於 300px）把卡片右側裁掉、超出版面。
         CardStyle: {
-            Card: 'width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Card: 'width:100%;max-width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
             TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             Row: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
@@ -777,8 +792,9 @@ var ExternalText = {
         SelectContractPrompt: '您目前有多筆教練合約，請選擇要查詢的合約：',
         SelectContractInvalid: '請點選上方合約按鈕。',
 
+        // 寬度用 100%+max-width（不是固定 px），避免窄螢幕把卡片右側裁掉、超出版面。
         CardStyle: {
-            Card: 'width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
+            Card: 'width:100%;max-width:300px;box-sizing:border-box;background:#ffffff;border-radius:12px;padding:16px 18px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);',
             TitleRow: 'padding-bottom:10px;border-bottom:3px solid #f5c518;',
             Title: 'font-weight:700;font-size:16px;color:#1a1a1a;',
             ComboRow: 'display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f0f0;font-size:14px;',
@@ -822,23 +838,46 @@ var ExternalText = {
         }
     },
 
-    // 個人資料變更申請流程文案（節點以 C010 起編）
+    // 個人資料變更申請流程文案（節點以 C010 起編）。
+    // C010 先問申辦身分（本人／代理人，比照 LeaveFlow／MembershipTerminationFlow／CoachContractTerminationFlow
+    // 的做法）：本人 → C030_Self 走原本的表單流程；代理人 → 交共用 AgentFlow 處理到底。
     // FormFlag 對應前端 FormFlow.registerForm('PersonalDataChangeForm', ...) 註冊的 key，
-    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。
+    // C020（SELF 分支）回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單。
     PersonalDataChange: {
+        IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
+        IdentityButtons: [
+            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
+            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+        ],
+        IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
+
         FormFlag: 'PersonalDataChangeForm',
         MissingSelection: '請至少勾選一項要變更的項目（手機／戶籍地址／通訊地址／姓名）。',
         InvalidMobile: '請輸入正確的手機號碼（09 開頭 10 碼數字）。',
         InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
         MissingIdCard: '變更戶籍地址或姓名需上傳身分證正反面，請重新上傳後再送出。',
         SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
-        Cancelled: '已為您取消本次申請。'
+        Cancelled: '已為您取消本次申請。',
+
+        // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
+        // ApplicationType 沿用 ApplicationProgress.CategoryLabels 裡已對過的「個資變更」字面值。
+        ApplicationType: '個資變更',
+        ToAgentValue: 'ToAgentOfPersonalDataChangeFlow'
     },
 
-    // 發票資訊變更申請流程文案（節點以 C010 起編）
+    // 發票資訊變更申請流程文案（節點以 C010 起編）。
+    // C010 先問申辦身分（本人／代理人，比照 PersonalDataChangeFlow 等其他申辦類流程的做法）：
+    // 本人 → C030_Self 走原本的表單流程；代理人 → 交共用 AgentFlow 處理到底。
     // FormFlag 對應前端 FormFlow.registerForm('InvoiceInfoChangeForm', ...) 註冊的 key，
-    // C010 回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單（走 FormFlow.js 正規路由，不再用固定文字比對）。
+    // C020（SELF 分支）回 parameters:{ [FormFlag]: FormFlag } 觸發前端彈出表單。
     InvoiceInfoChange: {
+        IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
+        IdentityButtons: [
+            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
+            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+        ],
+        IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
+
         FormFlag: 'InvoiceInfoChangeForm',
         // 規格【功能說明】4. 紅字提示語：C010 進場時回在對話裡（PM 已確認需在對話中顯示，不只是表單內文字）。
         ReminderNotice: '<span style="color:#e5484d;">申請內容請務必確認正確，以維護您的發票資訊，申請後已開立之發票七日內若需變更，請洽廠館櫃台。</span>',
@@ -846,7 +885,12 @@ var ExternalText = {
         InvalidUnified: '統一編號請輸入正確的 8 碼數字。',
         InvalidContact: '請填寫正確的受理通知聯絡方式（手機號碼或 Email，擇一）。',
         SubmitDone: '您的申請已送出，線上申請約需七個工作日，受理結果將依您選擇之聯絡方式通知您；若有特殊情形將由專人與您聯繫，謝謝。',
-        Cancelled: '已為您取消本次申請。'
+        Cancelled: '已為您取消本次申請。',
+
+        // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
+        // ApplicationType 沿用 ApplicationProgress.CategoryLabels 裡已對過的「發票變更」字面值。
+        ApplicationType: '發票變更',
+        ToAgentValue: 'ToAgentOfInvoiceInfoChangeFlow'
     },
 
     // 會籍資格升等（FF-04-01）— 純 Web 表單式。第一階段只開放「會籍資格升等」；
@@ -854,9 +898,9 @@ var ExternalText = {
     ChangeMembershipFlow: {
         TypeAsk: '請選擇要申辦的項目：',
         TypeButtons: [
-            { label: '會籍資格升等', submit: '會籍資格升等', style: 'Primary', enabled: true },
-            { label: '會籍廠館轉移', submit: '會籍廠館轉移', style: 'Secondary', enabled: false },
-            { label: '廠館轉移加卡別升等', submit: '廠館轉移加卡別升等', style: 'Secondary', enabled: false }
+            { label: '會籍資格升等', submit: 'UPGRADE', style: 'Secondary', enabled: true },
+            { label: '會籍廠館轉移', submit: 'TRANSFER', style: 'Secondary', enabled: true },
+            { label: '廠館轉移加卡別升等', submit: 'TRANSFER_UPGRADE', style: 'Secondary', enabled: true }
         ],
         // 申辦項目 → ECP U_ChangeType 代碼（ECP 字典「健身工廠_會籍異動類型」：U 升等、T 轉館、A 升等加轉館）。
         ChangeTypeCode: { '會籍資格升等': 'U', '會籍廠館轉移': 'T', '廠館轉移加卡別升等': 'A' },
@@ -882,6 +926,8 @@ var ExternalText = {
         AdminTerminated: '合約欠款，請洽會員服務中心。',
         NoContract: '無符合合約狀態資訊，若有相關問題請洽會員服務中心。',
         NoUpgradeOption: '您目前的會籍已是最高等級，沒有可升等的卡別。若有相關問題請洽會員服務中心。',
+        NoTransferUpgradeOption: '您目前的會籍已是最高等級，沒有可升等的卡別；如需更換主要使用廠館，請改選「會籍廠館轉移」。',
+        NoTransferUpgradeOptionTryUpgrade: '廠館轉移加卡別升等可升等至單館金卡或區域卡，您目前的會籍沒有可選的項目；如需升等全國白金卡，請改選「會籍資格升等」；如需更換主要使用廠館，請改選「會籍廠館轉移」。',
 
         Cancelled: '已為您取消本次申請。',
         SubmitInvalid: '表單資料不完整或有誤，請確認後重新申請。',
@@ -889,8 +935,8 @@ var ExternalText = {
         SubmitDone: '線上申請需約三個工作日，受理結果將依您選擇之聯絡方式通知，若有特殊情形將有專人與您聯繫，謝謝。',
 
         // 交給共用 AgentFlow 時帶入：申辦類型（寫 U_ApplicationType）＋ 轉專人 parameters 的 value。
-        // TODO(PM 確認)：ApplicationType 須與 ECP 代理人申辦單元的下拉值逐字一致（需求書 p.77 代碼 4）。
-        ApplicationType: '會籍升等/轉館/轉館加升等',
+        // ApplicationType 依規格書 U_ApplicationType 代碼表：4＝會籍升等/轉館/轉館加升等（見 LeaveFlow.ApplicationType 註解的完整代碼表）。
+        ApplicationType: '4',
         ToAgentValue: 'ToAgentOfChangeMembershipFlow'
     }
 };

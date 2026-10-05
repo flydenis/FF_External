@@ -37,14 +37,16 @@ const form = (extra) => JSON.stringify({
 // expect：isContinuum、includes（message 須含的字）、excludes（不可含的字）、saved（到此為止累計寫入 ECP 的筆數）
 const SCENARIOS = [
     { name: '本人升等 happy path（單館銀卡 → 區域金卡）', member: 'TEST0001', turns: [
-        { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['請選擇要申辦的項目', 'UPGRADE'], excludes: ['TRANSFER'] } },
+        { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['請選擇要申辦的項目', 'submit="會籍資格升等"'] } },
         { input: 'UPGRADE', expect: { isContinuum: '1', includes: ['本人申辦', '代理他人申辦'] } },
         { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', 'CFM20250610150231093', '4:region', '單館銀卡（屏東潮州）', minDate] } },
         { input: form(), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'], saved: 1 } }
     ], check: () => {
         const r = saved[saved.length - 1];
         const ok = r.changeType === 'U' && r.upCardType === '4' && r.contractNo === 'CFM20250610150231093'
-            && r.memberCode === 'M0000001' && r.payType === 'C' && r.actDate === minDate && r.remark.includes('區域金卡（南區）');
+            && r.memberCode === 'M0000001' && r.payType === 'C' && r.actDate === minDate && r.remark.includes('區域金卡（南區）')
+            && r.detail && r.detail.upMembership === '2' && r.detail.oldCardType === '1' && r.detail.oldMembership === '1'
+            && r.detail.oldAvailableVenue === '屏東潮州';
         return ok ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
     } },
     { name: '預帶資料只帶可升選項（不含降級）', member: 'TEST0001', turns: [
@@ -56,9 +58,85 @@ const SCENARIOS = [
         { input: '開始', expect: { isContinuum: '1' } },
         { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['本人申辦'] } }
     ] },
-    { name: '第一階段不接受轉館', member: 'TEST0001', turns: [
+    { name: '申辦項目三選一都出現', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1', includes: ['submit="會籍資格升等"', 'submit="會籍廠館轉移"', 'submit="廠館轉移加卡別升等"'] } },
+        { input: '亂打', expect: { isContinuum: '1', includes: ['請點選要申辦的項目'] } }
+    ] },
+    // ---- 會籍廠館轉移（T）----
+    { name: '轉館 happy path（屏東潮州 → 台北信義）', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER', expect: { isContinuum: '1', includes: ['請點選要申辦的項目'] } }
+        { input: 'TRANSFER', expect: { isContinuum: '1', includes: ['本人申辦'] } },
+        { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', '"changeType":"T"', 'PX001'], excludes: ['"code":"PW046"'] } },
+        { input: form({ upgradeOption: '', newVenue: 'PX001' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => {
+        const r = saved[saved.length - 1];
+        const ok = r.changeType === 'T' && !r.upCardType && r.transfer && r.transfer.storeCode === 'PX001'
+            && r.transfer.city === '台北市' && r.transfer.region === '6' && r.remark.includes('新主要使用廠館：台北信義')
+            && r.detail && !r.detail.upMembership && r.detail.oldAvailableVenue === '屏東潮州';
+        return ok ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
+    } },
+    { name: '轉館選原廠館（竄改）→ 核實不過', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '', newVenue: 'PW046' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
+    ] },
+    { name: '轉館沒選館 → 核實不過', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
+    ] },
+    { name: '全國白金卡也能轉館（換主要使用廠館）', member: 'TEST0003', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm'] } }
+    ] },
+    // ---- 廠館轉移加卡別升等（A）----
+    { name: '轉館加升等 happy path（單館銀卡 → 區域金卡北區＋台北信義）', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1', includes: ['本人申辦'] } },
+        { input: 'SELF', expect: { isContinuum: '1', includes: ['"changeType":"A"', '4:region:6', '4:region:2', '4:single'], excludes: ['"code":"PW046"', '1:single', '6:national'] } },
+        { input: form({ upgradeOption: '4:region:6', newVenue: 'PX001' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => {
+        const r = saved[saved.length - 1];
+        const ok = r.changeType === 'A' && r.upCardType === '4' && r.transfer && r.transfer.storeCode === 'PX001'
+            && r.detail && r.detail.upMembership === '6' && r.remark.includes('區域金卡（北區）') && r.remark.includes('台北信義');
+        return ok ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
+    } },
+    { name: '轉館加升等：選北區卻選南區的館 → 核實不過', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '4:region:6', newVenue: 'PW001' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
+    ] },
+    { name: '轉館加升等：澎湖馬公各區都可選', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '4:region:6', newVenue: 'PW086' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ] },
+    { name: '轉館加升等：選原廠館 → 核實不過', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '4:single', newVenue: 'PW046' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
+    ] },
+    { name: '轉館加升等：全國白金 → 無可升選項並提示改選轉館', member: 'TEST0003', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '0', includes: ['會籍廠館轉移'] } }
+    ] },
+    { name: '轉館加升等：區域金卡 → 無可選項並提示改走升等／轉館（A 不含全國白金）', member: 'TEST0002', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '0', includes: ['會籍資格升等', '會籍廠館轉移'], excludes: ['最高等級'] } }
+    ] },
+    { name: '轉館加升等：送全國白金 → 核實不過', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '6:national', newVenue: 'PX001' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '取消申請', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
@@ -97,7 +175,10 @@ const SCENARIOS = [
         { input: form({ contactType: 'email', contactValue: 'a@b.com', taxId: '12345678', payType: 'T' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
     ], check: () => {
         const r = saved[saved.length - 1];
-        return r.contactType === 'email' && r.taxId === '12345678' && r.payType === 'T' ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
+        const d = r.detail || {};
+        return r.contactType === 'email' && r.taxId === '12345678' && r.payType === 'T'
+            && d.oldCardType === '13' && d.oldMembership === '6' && d.oldAvailableVenue === '北區廠館通用'
+            && ['6', '7'].includes(d.upMembership) ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
     } },
     { name: '全國白金卡 → 無可升選項，流程結束', member: 'TEST0003', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
@@ -119,10 +200,20 @@ const SCENARIOS = [
         { input: 'UPGRADE', expect: { isContinuum: '1' } },
         { input: 'SELF', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
     ] },
-    { name: '沒帶會員識別 → 無符合合約狀態（不誤帶別人資料）', member: '', turns: [
+    { name: '沒帶會員識別＋未設 Qbi 預設會員 → 無符合合約狀態（不誤帶別人資料）', member: '', qbiDefault: '', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
         { input: 'UPGRADE', expect: { isContinuum: '1' } },
         { input: 'SELF', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
+    ] },
+    { name: '沒帶會員識別＋Qbi 預設會員 TEST0001 → 可開表單（測試 WebChat 未登入用）', member: '', qbiDefault: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1', includes: ['submit="會籍資格升等"', 'submit="會籍廠館轉移"'], excludes: ['background-color:#2563eb', 'submit="UPGRADE"'] } },
+        { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['submit="本人申辦"'] } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['ChangeMembershipForm'] } }
+    ] },
+    { name: '舊的英文代碼仍可用（測試平台打 UPGRADE／SELF）', member: '', qbiDefault: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: 'UPGRADE', expect: { isContinuum: '1' } },
+        { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', 'M0000001'] } }
     ] },
     { name: '代理他人申辦 → 交給代理人表單', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
@@ -177,6 +268,9 @@ function check(resp, expect) {
     for (const sc of SCENARIOS) {
         const chatId = `verify-${Date.now()}-${crypto.randomInt(1000, 9999)}`;
         saveShouldFail = !!sc.failSave;
+        const cm = ExternalConfig.ChangeMembership;
+        const prevDefault = cm.QbiDefaultMemberKey;
+        if ('qbiDefault' in sc) cm.QbiDefaultMemberKey = sc.qbiDefault;
         let detail = '';
         for (let i = 0; i < sc.turns.length && !detail; i++) {
             const t = sc.turns[i];
@@ -184,6 +278,7 @@ function check(resp, expect) {
             const fails = check(resp, t.expect);
             if (fails.length) detail = `第${i + 1}輪：` + fails.join('；');
         }
+        cm.QbiDefaultMemberKey = prevDefault;
         if (!detail && sc.check) detail = sc.check();
         if (!detail) { pass++; console.log(`  [PASS] ${sc.name}`); }
         else { fail++; console.log(`  [FAIL] ${sc.name} — ${detail}`); }

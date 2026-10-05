@@ -72,14 +72,15 @@ function makeOption(cardName, scope, region) {
 //   單區 金     → 雙區域金卡、全國白金卡
 // 「銀・鈦銀卡」選項沿用會員原卡別（銀＝鈦銀同級，互換不算升等）——假設。
 // 金卡列在對照表「升等(U)」欄標「—」，但 PM 確認金卡可以升區卡（2026-09-23），故照「升等後適用種類」提供選項。
-function getUpgradeOptions({ cardName, membership, storeCode, dualRegionEnabled }) {
+// regionOverride：轉館加升等用（區域由會員自選，TransferRule 只取「卡別×範圍」組合），升等不傳。
+function getUpgradeOptions({ cardName, membership, storeCode, dualRegionEnabled, regionOverride }) {
     const card = String(cardName);
     const scope = scopeOf(membership);
     if (!CARDS[card] || !scope) return [];
     if (scope === 'national' || card === PLATINUM) return [];
 
     const isSilverTier = CARDS[card].rank === 1;
-    const region = originRegionOf({ membership, storeCode });
+    const region = regionOverride || originRegionOf({ membership, storeCode });
     const options = [];
 
     if (scope === 'single') {
@@ -111,6 +112,29 @@ function validateSelection({ options, code, secondRegion }) {
     return { ...option, secondRegion: second, label: option.label.replace('另選一區', REGIONS[second]) };
 }
 
+// 升等後會員資格代碼（寫 ECP U_UpMembership）：單館 1、區域＝該區代碼、全國 7。
+// 雙區卡代碼需求書未定（Q6，目前隱藏不會送出），回 null。
+function membershipAfter(option) {
+    if (!option) return null;
+    if (option.scope === 'single') return MEMBERSHIP_SINGLE;
+    if (option.scope === 'region') return option.region ? String(option.region) : null;
+    if (option.scope === 'national') return MEMBERSHIP_NATIONAL;
+    return null;
+}
+
+// 可用分館顯示文字（寫 ECP U_OldAvailableVenue），依《查詢.會籍合約.線上表單及api相關範圍115.07.29》p.8 批註：
+// 白金＝全國廠館通用；區卡＝「**區廠館通用」；單館＝廠館名稱。雙館／小三通的資料格式客戶 API 未定，暫同單館。
+function availableVenueText({ membership, storeCode }) {
+    const scope = scopeOf(membership);
+    if (scope === 'national') return '全國廠館通用';
+    if (scope === 'region') return `${REGIONS[membership]}廠館通用`;
+    if (scope === 'single') {
+        const store = StoreRegion[storeCode];
+        return store ? store.name : String(storeCode || '');
+    }
+    return '';
+}
+
 function pad(n) { return String(n).padStart(2, '0'); }
 function toISODate(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 function parseISODate(s) {
@@ -140,11 +164,14 @@ function isValidActivationDate(actDate, minDate) {
 module.exports = {
     CARDS,
     REGIONS,
+    makeOption,
     cardLabel,
     scopeOf,
     describeCurrent,
     getUpgradeOptions,
     validateSelection,
+    membershipAfter,
+    availableVenueText,
     minActivationDate,
     isValidActivationDate,
     toISODate

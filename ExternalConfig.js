@@ -179,10 +179,16 @@ module.exports = {
     //   WorkingDaysBeforeActivation／Holidays：啟用日＝申請日後數滿 N 個工作日再往後一天。工作日只排除週六日，
     //   國定假日先不排除（2026-09-23 決定），Holidays 保持空陣列；日後要排除時填 'YYYY-MM-DD'。
     //   DualRegionEnabled：雙區卡為未來規劃，上線前隱藏（false）——待 PM 確認 Q6。
+    //   WriteDetailFields：送單時一併寫 U_UpMembership／U_OldCardType／U_OldMembership／U_OldAvailableVenue
+    //   （2026-09-29 ECP 試建，待 SA 確認 Q11／Q12；ECP 若刪掉這 4 欄，這裡改 false）。
     ChangeMembership: {
         AllowedContractStatus: ['1', '7'],
         WorkingDaysBeforeActivation: 3,
         Holidays: [],
-        DualRegionEnabled: false
+        DualRegionEnabled: false,
+        WriteDetailFields: true,
+        // QbiDefaultMemberKey：只在 Mode='Qbi'（mock 測試）且進線沒帶 customerData.memberKey 時使用的假會員，
+        //   讓未登入的測試 WebChat 也能走完流程（Q13 會員身分傳遞方式未定案前）。正式模式不使用；設 '' 即停用。
+        QbiDefaultMemberKey: 'TEST0001'
     }
 };

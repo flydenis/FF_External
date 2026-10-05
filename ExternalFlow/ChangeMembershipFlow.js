@@ -3,6 +3,7 @@ const wording = require('../ExternalMethod/ExternalText');
 const ExternalConfig = require('../ExternalConfig');
 const ai3Api = require('../ExternalMethod/Ai3Api');
 const UpgradeRule = require('../ExternalMethod/UpgradeRule');
+const TransferRule = require('../ExternalMethod/TransferRule');
 const AgentFlow = require('./AgentFlow');
 
 const T = wording.ChangeMembershipFlow;
@@ -11,8 +12,9 @@ const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const TAX_ID_PATTERN = /^\d{8}$/;
 const PAY_TYPES = ['C', 'T'];
 
-// 會籍資格升等（FF-04-01）— 純 Web 表單式。第一階段只開放「會籍資格升等」（U），
-// 轉館（T）／轉館加升等（A）的按鈕在 ExternalText 設 enabled:false，第二階段打開並補表單即可。
+// 會籍資格升等／會籍廠館轉移／廠館轉移加卡別升等（FF-04-01）— 純 Web 表單式，三種共用同一張表單（依 changeType 切換欄位）。
+//   U 升等：選升等選項（區域鎖原廠館所在區）；T 轉館：選新廠館（卡別不動）；A 轉館加升等：選升等選項（區域自選）＋該區新廠館。
+//   新廠館清單一律排除原廠館，送件時後端再核實（TransferRule）。寒暑假學生轉館屬 FF-04-02，本流程不做。
 //   C010 欠費提醒＋申辦項目按鈕 → C015 問身分（本人/代理人）→ C020 分派：
 //     本人  → 查「會籍合約異動申辦初始頁資料」→ 判斷可申請 → 算可升選項 → 回表單旗標＋預帶資料（C030）
 //     代理人 → 交給共用 AgentFlow 處理到底（C030_Agent）
@@ -72,15 +74,21 @@ class ChangeMembershipFlow extends IntentBaseFlow {
             return this.reply({ message: adminTerminated ? T.AdminTerminated : T.NoContract, isContinuum: '0' });
         }
 
-        const options = UpgradeRule.getUpgradeOptions({
-            cardName: contract.cardName,
-            membership: contract.membership,
-            storeCode: contract.storeCode,
-            dualRegionEnabled: !!this.settings().DualRegionEnabled
-        });
-        if (!options.length) {
-            this.logger.InfoLog(`[${this.FlowName}] C020 無可升選項（card=${contract.cardName}, membership=${contract.membership}）`);
-            return this.reply({ message: T.NoUpgradeOption, isContinuum: '0' });
+        // 升等（U）：區域鎖原廠館所在區；轉館加升等（A）：區域由會員自選；純轉館（T）：卡別不動，沒有升等選項。
+        let options = [];
+        if (this.changeType === 'U') {
+            options = UpgradeRule.getUpgradeOptions({
+                cardName: contract.cardName,
+                membership: contract.membership,
+                storeCode: contract.storeCode,
+                dualRegionEnabled: !!this.settings().DualRegionEnabled
+            });
+        } else if (this.changeType === 'A') {
+            options = TransferRule.getTransferUpgradeOptions({ cardName: contract.cardName, membership: contract.membership });
+        }
+        if (this.changeType !== 'T' && !options.length) {
+            this.logger.InfoLog(`[${this.FlowName}] C020 無可升選項（type=${this.changeType}, card=${contract.cardName}, membership=${contract.membership}）`);
+            return this.reply({ message: this.noOptionMessage(contract), isContinuum: '0' });
         }
 
         const applyDate = UpgradeRule.toISODate(new Date());
@@ -95,13 +103,16 @@ class ChangeMembershipFlow extends IntentBaseFlow {
             applyDate,
             contractNo: contract.contractNo,
             currentCard: UpgradeRule.describeCurrent(contract),
+            currentVenue: UpgradeRule.availableVenueText(contract),
             contactPhone: member.contactPhone || '',
             contactEmail: member.contactEmail || '',
-            options: options.map(o => ({ code: o.code, label: o.label, requiresSecondRegion: o.requiresSecondRegion, secondRegionChoices: o.secondRegionChoices })),
+            options: options.map(o => ({ code: o.code, label: o.label, region: o.region, requiresSecondRegion: o.requiresSecondRegion, secondRegionChoices: o.secondRegionChoices })),
+            // 轉館／轉館加升等：可選新廠館（已排除原廠館），前端依選項的 region 過濾後做「縣市 → 館別」下拉。
+            venues: this.changeType === 'U' ? [] : TransferRule.venueChoices({ excludeStoreCode: contract.storeCode }),
             minActDate: this.minActDate(applyDate),
             payOptions: T.PayOptions
         };
-        this.logger.InfoLog(`[${this.FlowName}] C020 回表單旗標，合約=${contract.contractNo}，可升選項=${options.map(o => o.code).join(',')}`);
+        this.logger.InfoLog(`[${this.FlowName}] C020 回表單旗標，type=${this.changeType}，合約=${contract.contractNo}，選項=${options.map(o => o.code).join(',') || '(轉館無)'}`);
         return this.reply({ message: '', parameters: { [T.FormFlag]: T.FormFlag, [T.DataKey]: formData }, nextStep: 'C030' });
     }
 
@@ -121,6 +132,7 @@ class ChangeMembershipFlow extends IntentBaseFlow {
         }
 
         this.selected = checked.selected;
+        this.venue = checked.venue;
         const { entityId } = await ai3Api.submitChangeMembership({
             memberCode: this.member.memberCode,
             memberName: this.member.memberName,
@@ -129,11 +141,18 @@ class ChangeMembershipFlow extends IntentBaseFlow {
             contactType: form.contactType,
             contactValue: form.contactValue,
             changeType: this.changeType,
-            upCardType: checked.selected.cardName,
+            upCardType: checked.selected ? checked.selected.cardName : '',
             actDate: form.actDate,
             payType: form.payType,
             taxId: checked.taxId,
-            remark: `升等後：${checked.selected.label}（原：${UpgradeRule.describeCurrent(this.contract)}）`,
+            remark: this.buildRemark(checked),
+            transfer: checked.venue ? { storeCode: checked.venue.code, city: checked.venue.city, region: checked.venue.region } : null,
+            detail: this.settings().WriteDetailFields ? {
+                upMembership: checked.selected ? UpgradeRule.membershipAfter(checked.selected) : null,
+                oldCardType: this.contract.cardName,
+                oldMembership: this.contract.membership,
+                oldAvailableVenue: UpgradeRule.availableVenueText(this.contract)
+            } : null,
             logger: this.logger
         });
         this.orderNo = entityId;
@@ -146,7 +165,15 @@ class ChangeMembershipFlow extends IntentBaseFlow {
         return this.reply({ message: T.SubmitDone, isContinuum: '0' });
     }
 
-    // 逐欄核實，回 { ok, reason, selected, taxId }；reason 只記 log，不回給使用者。
+    // 備註（U_Remark）：升等前後的文字說明，方便客服閱讀。
+    buildRemark({ selected, venue }) {
+        const parts = [];
+        if (selected) parts.push(`升等後：${selected.label}`);
+        if (venue) parts.push(`新主要使用廠館：${venue.name}`);
+        return `${parts.join('；')}（原：${UpgradeRule.describeCurrent(this.contract)}）`;
+    }
+
+    // 逐欄核實，回 { ok, reason, selected, venue, taxId }；reason 只記 log，不回給使用者。
     validateForm(form) {
         if (!form || typeof form !== 'object') return { ok: false, reason: '表單不是 JSON 物件' };
         if (!this.contract || !this.options) return { ok: false, reason: '無 C020 查到的合約資料' };
@@ -155,8 +182,21 @@ class ChangeMembershipFlow extends IntentBaseFlow {
             || (form.contactType === 'email' && EMAIL_PATTERN.test(String(form.contactValue || '')));
         if (!contactOk) return { ok: false, reason: '聯絡方式格式不符' };
 
-        const selected = UpgradeRule.validateSelection({ options: this.options, code: form.upgradeOption, secondRegion: form.secondRegion });
-        if (!selected) return { ok: false, reason: `升等選項不在可升清單內（${form.upgradeOption}）` };
+        let selected = null;
+        if (this.changeType !== 'T') {
+            selected = UpgradeRule.validateSelection({ options: this.options, code: form.upgradeOption, secondRegion: form.secondRegion });
+            if (!selected) return { ok: false, reason: `升等選項不在可選清單內（${form.upgradeOption}）` };
+        }
+
+        // 轉館／轉館加升等：新廠館須在可選清單內（不可是原廠館）；轉館加升等選區域型時，新館須在所選區域。
+        let venue = null;
+        if (this.changeType !== 'U') {
+            const region = selected && selected.scope === 'region' ? selected.region : null;
+            if (!TransferRule.isAllowedVenue({ storeCode: form.newVenue, excludeStoreCode: this.contract.storeCode, region })) {
+                return { ok: false, reason: `新廠館不可選（${form.newVenue}，原館 ${this.contract.storeCode}，區域 ${region || '不限'}）` };
+            }
+            venue = TransferRule.venueInfo(form.newVenue);
+        }
 
         const minDate = this.minActDate(UpgradeRule.toISODate(new Date()));
         if (!UpgradeRule.isValidActivationDate(form.actDate, minDate)) return { ok: false, reason: `啟用日 ${form.actDate} 早於最早可選日 ${minDate}` };
@@ -166,7 +206,7 @@ class ChangeMembershipFlow extends IntentBaseFlow {
         const taxId = String(form.taxId || '').trim();
         if (taxId && !TAX_ID_PATTERN.test(taxId)) return { ok: false, reason: '統編不是 8 碼數字' };
 
-        return { ok: true, selected, taxId };
+        return { ok: true, selected, venue, taxId };
     }
 
     // 代理人轉發節點：把每輪 askInput 轉給共用 AgentFlow 實例，直到其回 isContinuum:'0'。
@@ -183,14 +223,25 @@ class ChangeMembershipFlow extends IntentBaseFlow {
             role: this.role,
             ...(this.contract ? { contractNo: this.contract.contractNo } : {}),
             ...(this.selected ? { upgradeOption: this.selected.code } : {}),
+            ...(this.venue ? { newVenue: this.venue.code } : {}),
             ...(this.orderNo ? { orderNo: this.orderNo } : {}),
             ...(this.agentFlow ? this.agentFlow.getState() : {})
         };
     }
 
     // TODO(PM 確認 Q13)：會員識別暫由 customerData.memberKey 帶入（比照其他流程），待 APP 登入身分傳遞方式定案後調整。
+    // Qbi（mock 測試）模式下沒帶 memberKey 時改用 QbiDefaultMemberKey，正式模式維持查無（不誤帶他人資料）。
     memberKey() {
-        return this.customerData && this.customerData.memberKey;
+        const key = this.customerData && this.customerData.memberKey;
+        if (key) return key;
+        return ExternalConfig.Mode === 'Qbi' ? (this.settings().QbiDefaultMemberKey || undefined) : undefined;
+    }
+
+    // 沒有可升選項時的提示。A 不含全國白金：還能升全國白金的會員（如區域金卡）引導改走升等；已是全國白金則引導改走轉館。
+    noOptionMessage(contract) {
+        if (this.changeType !== 'A') return T.NoUpgradeOption;
+        const canUpgrade = UpgradeRule.getUpgradeOptions({ cardName: contract.cardName, membership: contract.membership, storeCode: contract.storeCode }).length > 0;
+        return canUpgrade ? T.NoTransferUpgradeOptionTryUpgrade : T.NoTransferUpgradeOption;
     }
 
     settings() {
@@ -226,6 +277,12 @@ class ChangeMembershipFlow extends IntentBaseFlow {
     }
 
     // 比對 Web 按鈕的 submit 值或按鈕文字（HTML 按鈕點擊後平台把 submit 值當 ask_input 回送）。
+    // 按鈕送出值改用中文 label，WebChat 使用者泡泡才會顯示「會籍資格升等」而不是「UPGRADE」。
+    // 只在本流程覆寫（IntentBaseFlow.buildButtons 其他流程共用，不動）；parseButtonCode 本來就同時認 label 與 submit。
+    buildButtons(buttons, style) {
+        return super.buildButtons((buttons || []).map(b => ({ ...b, submit: b.label })), style);
+    }
+
     parseButtonCode(input, buttons) {
         const raw = String(input == null ? '' : input).trim();
         const hit = (buttons || []).find(b => raw === b.submit || raw === b.label);

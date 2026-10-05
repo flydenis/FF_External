@@ -23,6 +23,11 @@ class ActiveLeaveRecordApiMgr {
             }
             logger && logger.InfoLog(`[ActiveLeaveRecordApiMgr] → 讀本機 mock: ${filePath}`);
             source = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            // mock 檔只存「距今幾天」，這裡即時換算成實際日期字串，確保不管哪天測試，
+            // 這筆「當前已生效」的請假紀錄起訖日都會涵蓋今天，不會因為時間經過變成過去式。
+            if (Array.isArray(source.data)) {
+                source.data = source.data.map(r => this.resolveDates(r));
+            }
             logger && logger.InfoLog(`[ActiveLeaveRecordApiMgr] ← mock 回傳（${Date.now() - started}ms）Body: ${JSON.stringify(source)}`);
         } else {
             const body = { name: 'ActiveLeaveRecordQuery', from: 'csr', sessionId: chatId || CommonMethod.makeSessionId(), formData: { key } };
@@ -38,6 +43,29 @@ class ActiveLeaveRecordApiMgr {
         const result = this.normalize(source, key);
         logger && logger.InfoLog(`[ActiveLeaveRecordApiMgr] 解析結果: found=${result.found}`);
         return result;
+    }
+
+    // Qbi mock 專用：把 { leaveStartDaysAgo, leaveEndDaysFromNow } 換算成實際日期字串（YYYY-MM-DD），
+    // 讓「請假起訖」跟「合約現行結束日」永遠涵蓋當下（起始日固定在過去、結束日固定在未來）。
+    resolveDates(record) {
+        if (!record || record.leaveStartDaysAgo == null || record.leaveEndDaysFromNow == null) return record;
+        const format = (d) => {
+            const p = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+        };
+        const addDays = (days) => {
+            const d = new Date();
+            d.setDate(d.getDate() + days);
+            return d;
+        };
+        const { leaveStartDaysAgo, leaveEndDaysFromNow, ...rest } = record;
+        const endDate = format(addDays(leaveEndDaysFromNow));
+        return {
+            ...rest,
+            leaveStartDate: format(addDays(-leaveStartDaysAgo)),
+            leaveEndDate: endDate,
+            contractCurrentEndDate: endDate
+        };
     }
 
     parseSource(response) {
