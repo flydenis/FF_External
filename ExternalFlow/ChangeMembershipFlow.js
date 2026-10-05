@@ -42,12 +42,12 @@ class ChangeMembershipFlow extends IntentBaseFlow {
         const code = this.parseButtonCode(this.askInput, T.IdentityButtons);
         this.logger.InfoLog(`[${this.FlowName}] C020 身分別=${code || '(未對到)'}`);
 
-        if (code === 'SELF') {
+        if (code === '本人申辦') {
             this.errorCount = 0;
             this.role = 'SELF';
             return this.prepareSelfForm();
         }
-        if (code === 'AGENT') {
+        if (code === '代理他人申辦') {
             this.errorCount = 0;
             this.role = 'AGENT';
             this.agentFlow = new AgentFlow({

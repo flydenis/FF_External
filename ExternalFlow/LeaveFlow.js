@@ -24,7 +24,7 @@ class LeaveFlow extends IntentBaseFlow {
         const code = this.parseButtonCode(this.askInput, T.StopTypeButtons);
         this.logger.InfoLog(`[${this.FlowName}] C015 請假方式=${code || '(未對到)'}`);
 
-        if (code === 'PAUSE' || code === 'EXTEND') {
+        if (code === '會籍暫停' || code === '會籍延展') {
             this.errorCount = 0;
             this.stopType = code;
             return this.reply({
@@ -40,16 +40,16 @@ class LeaveFlow extends IntentBaseFlow {
         const code = this.parseButtonCode(this.askInput, T.IdentityButtons);
         this.logger.InfoLog(`[${this.FlowName}] C020 身分別=${code || '(未對到)'}`);
 
-        if (code === 'SELF') {
+        if (code === '本人申辦') {
             this.errorCount = 0;
             this.role = 'SELF';
             // 觸發前端自繪對應表單：只回旗標，message 空、isContinuum '1' 續談。
-            if (this.stopType === 'EXTEND') {
+            if (this.stopType === '會籍延展') {
                 return this.reply({ message: '', parameters: { [T.ExtensionFormFlag]: T.ExtensionFormFlag }, nextStep: 'C030_ExtensionSelf' });
             }
             return this.reply({ message: '', parameters: { [T.SelfFormFlag]: T.SelfFormFlag }, nextStep: 'C030_Self' });
         }
-        if (code === 'AGENT') {
+        if (code === '代理他人申辦') {
             this.errorCount = 0;
             this.role = 'AGENT';
             this.agentFlow = new AgentFlow({

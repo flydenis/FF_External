@@ -16,8 +16,10 @@ var ExternalText = {
     NoList: ['2', '否', '不是', '不對', '錯誤', 'no', 'n', '取消', '重新輸入'],
 
     // Web 一般 HTML 按鈕的預設樣式（顏色/預設主色在此調；由 IntentBaseFlow.buildButtons 使用）。
+    // PM 要求所有選項按鈕一律白底，不要一個藍一個白（原本 Primary 是藍底白字凸顯主要選項），
+    // 故 Primary 直接改成跟 Secondary 一樣的白底樣式；buttons 陣列裡標 style:'Primary'/'Secondary' 的地方都不用改。
     ButtonStyle: {
-        Primary: 'display:inline-flex;align-items:center;padding:8px 24px;border-radius:9999px;font-weight:500;border:none;background-color:#2563eb;color:#ffffff;margin:0 5px 5px 0;',
+        Primary: 'display:inline-flex;align-items:center;padding:8px 24px;border-radius:9999px;font-weight:500;border:1px solid #d0d5dd;background-color:#ffffff;color:#333333;margin:0 5px 5px 0;',
         Secondary: 'display:inline-flex;align-items:center;padding:8px 24px;border-radius:9999px;font-weight:500;border:1px solid #d0d5dd;background-color:#ffffff;color:#333333;margin:0 5px 5px 0;',
         ContainerStyle: 'display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;'
     },
@@ -27,15 +29,15 @@ var ExternalText = {
     LeaveFlow: {
         StopTypeAsk: '請選擇請假方式：',
         StopTypeButtons: [
-            { label: '會籍暫停（需檢附證明）', submit: 'PAUSE', style: 'Secondary' },
-            { label: '會籍延展（免檢附證明／每月 $300 元）', submit: 'EXTEND', style: 'Primary' }
+            { label: '會籍暫停（需檢附證明）', submit: '會籍暫停', style: 'Secondary' },
+            { label: '會籍延展（免檢附證明／每月 $300 元）', submit: '會籍延展', style: 'Primary' }
         ],
         StopTypeInvalid: '請點選「會籍暫停」或「會籍延展」。',
 
         IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
         IdentityButtons: [
-            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
-            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+            { label: '本人申辦', submit: '本人申辦', style: 'Secondary' },
+            { label: '代理他人申辦', submit: '代理他人申辦', style: 'Primary' }
         ],
         // 身分別的 Cards 呈現（試作，僅 C015 用）：本人／代理人合併在同一張卡片的兩顆按鈕，不要拆成兩張卡。
         // value 沿用 IdentityButtons 的 submit 代碼，C020 解析邏輯不必跟著改。
@@ -75,8 +77,8 @@ var ExternalText = {
     CoachContractTerminationFlow: {
         IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
         IdentityButtons: [
-            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
-            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+            { label: '本人申辦', submit: '本人申辦', style: 'Secondary' },
+            { label: '代理他人申辦', submit: '代理他人申辦', style: 'Primary' }
         ],
         IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
 
@@ -97,8 +99,8 @@ var ExternalText = {
     MembershipTerminationFlow: {
         IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
         IdentityButtons: [
-            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
-            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+            { label: '本人申辦', submit: '本人申辦', style: 'Secondary' },
+            { label: '代理他人申辦', submit: '代理他人申辦', style: 'Primary' }
         ],
         IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
 
@@ -119,8 +121,8 @@ var ExternalText = {
     PauseEarlyOpenFlow: {
         IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
         IdentityButtons: [
-            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
-            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+            { label: '本人申辦', submit: '本人申辦', style: 'Secondary' },
+            { label: '代理他人申辦', submit: '代理他人申辦', style: 'Primary' }
         ],
         IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
 
@@ -901,13 +903,13 @@ var ExternalText = {
             { label: '廠館轉移加卡別升等', submit: 'TRANSFER_UPGRADE', style: 'Secondary', enabled: true }
         ],
         // 申辦項目 → ECP U_ChangeType 代碼（ECP 字典「健身工廠_會籍異動類型」：U 升等、T 轉館、A 升等加轉館）。
-        ChangeTypeCode: { UPGRADE: 'U', TRANSFER: 'T', TRANSFER_UPGRADE: 'A' },
+        ChangeTypeCode: { '會籍資格升等': 'U', '會籍廠館轉移': 'T', '廠館轉移加卡別升等': 'A' },
         TypeInvalid: '請點選要申辦的項目。',
 
         IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
         IdentityButtons: [
-            { label: '本人申辦', submit: 'SELF', style: 'Secondary' },
-            { label: '代理他人申辦', submit: 'AGENT', style: 'Primary' }
+            { label: '本人申辦', submit: '本人申辦', style: 'Secondary' },
+            { label: '代理他人申辦', submit: '代理他人申辦', style: 'Primary' }
         ],
         IdentityInvalid: '請點選「本人申辦」或「代理他人申辦」。',
 
