@@ -906,6 +906,26 @@ var ExternalText = {
         ChangeTypeCode: { '會籍資格升等': 'U', '會籍廠館轉移': 'T', '廠館轉移加卡別升等': 'A' },
         TypeInvalid: '請點選要申辦的項目。',
 
+        // 學生寒暑假限定轉館（FF-04-02）：開放期間（ECP 參數）才多出這顆按鈕；轉館類型（T／A）與轉出／轉回（Y／O）在表單內選。
+        StudentButton: { label: '學生寒暑假轉館', submit: '學生寒暑假轉館', style: 'Secondary', enabled: true },
+        // TODO(SA 確認 S8)：【學生轉館須知】內容需求書未提供，先放佔位文字。
+        StudentNotice: [
+            '學生寒暑假限定轉館僅限寒暑假期間申請。',
+            '轉出新廠館與轉回原廠館來回僅限一次免手續費。',
+            '申請時需上傳有效學生證明（學生證正反面等），格式 jpg／jpeg／png，單檔 10MB 以內，最多 5 個檔案。',
+            '啟用日須為申請日起算 3 個工作日之後；轉出新廠館的啟用日不得超過本期寒暑假期間。'
+        ],
+        StudentTypes: [
+            { value: 'Y', label: '轉出新廠館' },
+            { value: 'O', label: '轉回原廠館' }
+        ],
+        StudentTransferTypes: [
+            { value: 'T', label: '會籍廠館轉移' },
+            { value: 'A', label: '廠館轉移加卡別升等' }
+        ],
+        StudentRemarkPrefix: '學生寒暑假轉館',
+        StudentClosed: '目前不在學生寒暑假轉館開放期間，若有相關問題請洽會員服務中心。',
+
         IdentityAsk: '您選擇的是申辦類服務，需先確認本次申辦身分：',
         IdentityButtons: [
             { label: '本人申辦', submit: '本人申辦', style: 'Secondary' },

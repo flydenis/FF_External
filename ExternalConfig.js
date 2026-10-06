@@ -189,6 +189,25 @@ module.exports = {
         WriteDetailFields: true,
         // QbiDefaultMemberKey：只在 Mode='Qbi'（mock 測試）且進線沒帶 customerData.memberKey 時使用的假會員，
         //   讓未登入的測試 WebChat 也能走完流程（Q13 會員身分傳遞方式未定案前）。正式模式不使用；設 '' 即停用。
-        QbiDefaultMemberKey: 'TEST0001'
+        QbiDefaultMemberKey: 'TEST0001',
+        // 學生寒暑假限定轉館（FF-04-02）。期間以 ECP 參數單元 PeriodUnit 為準（健工自行維護，一筆一期間、完整日期）；
+        //   ECP 讀不到（未設 EcpApi.Url、連線失敗、沒有啟用中的期間）時才用 DefaultPeriods（月-日，02-29 在非閏年自動改 2 月最後一天）。
+        //   QbiTestToday：只在 Mode='Qbi' 生效的「測試用今天日期」（例 '2027-07-10'），讓非開放期間也能測；正式模式一律用真實日期，測完改回 ''。
+        Student: {
+            Enabled: true,
+            PeriodUnit: 'CUS.StudentTransferPeriod',
+            DefaultPeriods: [
+                { name: '寒假', openFrom: '01-01', openTo: '02-29', actFrom: '01-01', actTo: '02-29' },
+                { name: '暑假', openFrom: '07-01', openTo: '09-30', actFrom: '07-01', actTo: '09-30' }
+            ],
+            QbiTestToday: ''
+        }
+    },
+
+    // 學生寒暑假轉館的學生證明上傳限制，走獨立 /StudentTransferUpload 端點（需求書 p.91：jpg/jpeg/png、單檔 10MB、最多 5 個）。
+    StudentTransferUpload: {
+        MaxFileSizeMB: 10,
+        MaxFileCount: 5,
+        AllowedExt: ['.jpg', '.jpeg', '.png']
     }
 };
