@@ -30,7 +30,7 @@ function scopeOf(membership) {
     return REGIONS[m] ? 'region' : '';
 }
 
-// 原資格為單館時，區域取原廠館所在區（假設，待 PM 確認 Q2）；澎湖馬公等不隸屬區域者回 null。
+// 原資格為單館時，區域取原廠館所在區；澎湖馬公等不隸屬區域者回 null（升區卡時改由會員自選區域，見 getUpgradeOptions）。
 function originRegionOf({ membership, storeCode }) {
     const scope = scopeOf(membership);
     if (scope === 'region') return String(membership);
@@ -39,6 +39,12 @@ function originRegionOf({ membership, storeCode }) {
         return store && store.region ? store.region : null;
     }
     return null;
+}
+
+// 有登錄在 StoreRegion、但不隸屬任何區的廠館（目前只有澎湖馬公）。
+function isUnzonedStore(storeCode) {
+    const store = StoreRegion[storeCode];
+    return !!store && !store.region;
 }
 
 function describeCurrent({ cardName, membership, storeCode }) {
@@ -88,6 +94,14 @@ function getUpgradeOptions({ cardName, membership, storeCode, dualRegionEnabled,
         if (region) {
             if (isSilverTier) options.push(makeOption(card, 'region', region));
             options.push(makeOption(GOLD, 'region', region));
+        } else if (isUnzonedStore(storeCode)) {
+            // 澎湖馬公不隸屬任何區：升區卡可自選任一區、不限特定區域（SA 2026-10-05）。
+            // 每區一個選項，code 帶區域代碼（同轉館加升等「卡別:region:區域」），雙區卡仍不提供（Q6）。
+            const regionCards = isSilverTier ? [card, GOLD] : [GOLD];
+            regionCards.forEach(c => Object.keys(REGIONS).forEach(r =>
+                options.push({ ...makeOption(c, 'region', r), code: `${c}:region:${r}` })));
+            options.push(makeOption(PLATINUM, 'national'));
+            return options;
         }
     }
     if (scope === 'region' && isSilverTier) options.push(makeOption(GOLD, 'region', region));

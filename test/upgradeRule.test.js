@@ -40,8 +40,20 @@ t('雙區開啟：區域金卡 → 雙區金卡、全國白金', () =>
 // 不可升／特殊
 t('全國白金卡 → 無可升選項', () =>
     assert.deepStrictEqual(codes({ cardName: '6', membership: '7', storeCode: 'PW007' }), []));
-t('澎湖馬公單館鈦銀卡 → 無區域選項（只剩單館金卡、全國白金）', () =>
-    assert.deepStrictEqual(codes({ cardName: '13', membership: '1', storeCode: 'PW086', dualRegionEnabled: true }), ['4:single', '6:national']));
+t('澎湖馬公單館鈦銀卡 → 可自選任一區（鈦銀／金卡各 5 區）＋單館金卡、全國白金', () =>
+    assert.deepStrictEqual(codes({ cardName: '13', membership: '1', storeCode: 'PW086', dualRegionEnabled: true }),
+        ['4:single', '13:region:2', '13:region:3', '13:region:4', '13:region:5', '13:region:6',
+            '4:region:2', '4:region:3', '4:region:4', '4:region:5', '4:region:6', '6:national']));
+t('澎湖馬公單館金卡 → 區域金卡 5 區＋全國白金（無單館金卡）', () =>
+    assert.deepStrictEqual(codes({ cardName: '4', membership: '1', storeCode: 'PW086' }),
+        ['4:region:2', '4:region:3', '4:region:4', '4:region:5', '4:region:6', '6:national']));
+t('澎湖馬公選區域金卡（北區）→ 升等後資格 6、標籤含北區', () => {
+    const opts = R.getUpgradeOptions({ cardName: '1', membership: '1', storeCode: 'PW086' });
+    const sel = R.validateSelection({ options: opts, code: '4:region:6' });
+    assert.ok(sel && R.membershipAfter(sel) === '6' && sel.label === '區域金卡（北區）');
+});
+t('澎湖馬公送沒有帶區域的 4:region → 核實不過', () =>
+    assert.strictEqual(R.validateSelection({ options: R.getUpgradeOptions({ cardName: '1', membership: '1', storeCode: 'PW086' }), code: '4:region' }), null));
 t('未知代碼 → 無可升選項', () =>
     assert.deepStrictEqual(codes({ cardName: '99', membership: '1', storeCode: 'PW046' }), []));
 

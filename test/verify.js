@@ -37,9 +37,9 @@ const form = (extra) => JSON.stringify({
 // expect：isContinuum、includes（message 須含的字）、excludes（不可含的字）、saved（到此為止累計寫入 ECP 的筆數）
 const SCENARIOS = [
     { name: '本人升等 happy path（單館銀卡 → 區域金卡）', member: 'TEST0001', turns: [
-        { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['請選擇要申辦的項目', 'submit="會籍資格升等"'] } },
-        { input: 'UPGRADE', expect: { isContinuum: '1', includes: ['本人申辦', '代理他人申辦'] } },
-        { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', 'CFM20250610150231093', '4:region', '單館銀卡（屏東潮州）', minDate] } },
+        { input: '會籍資格升等／會籍廠館轉移', expect: { isContinuum: '1', includes: ['請選擇要申辦的項目', 'submit="會籍資格升等"'] } },
+        { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['本人申辦', '代理他人申辦'] } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', 'CFM20250610150231093', '4:region', '單館銀卡（屏東潮州）', minDate] } },
         { input: form(), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'], saved: 1 } }
     ], check: () => {
         const r = saved[saved.length - 1];
@@ -51,8 +51,8 @@ const SCENARIOS = [
     } },
     { name: '預帶資料只帶可升選項（不含降級）', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1', includes: ['4:single', '1:region', '6:national'], excludes: ['1:single', '1:dual'] } }
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['4:single', '1:region', '6:national'], excludes: ['1:single', '1:dual'] } }
     ] },
     { name: '按鈕文字也能選（點「會籍資格升等」文字）', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
@@ -65,8 +65,8 @@ const SCENARIOS = [
     // ---- 會籍廠館轉移（T）----
     { name: '轉館 happy path（屏東潮州 → 台北信義）', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER', expect: { isContinuum: '1', includes: ['本人申辦'] } },
-        { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', '"changeType":"T"', 'PX001'], excludes: ['"code":"PW046"'] } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1', includes: ['本人申辦'] } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', '"changeType":"T"', 'PX001'], excludes: ['"code":"PW046"'] } },
         { input: form({ upgradeOption: '', newVenue: 'PX001' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
     ], check: () => {
         const r = saved[saved.length - 1];
@@ -77,26 +77,26 @@ const SCENARIOS = [
     } },
     { name: '轉館選原廠館（竄改）→ 核實不過', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ upgradeOption: '', newVenue: 'PW046' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '轉館沒選館 → 核實不過', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ upgradeOption: '' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '全國白金卡也能轉館（換主要使用廠館）', member: 'TEST0003', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm'] } }
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['ChangeMembershipForm'] } }
     ] },
     // ---- 廠館轉移加卡別升等（A）----
     { name: '轉館加升等 happy path（單館銀卡 → 區域金卡北區＋台北信義）', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1', includes: ['本人申辦'] } },
-        { input: 'SELF', expect: { isContinuum: '1', includes: ['"changeType":"A"', '4:region:6', '4:region:2', '4:single'], excludes: ['"code":"PW046"', '1:single', '6:national'] } },
+        { input: '廠館轉移加卡別升等', expect: { isContinuum: '1', includes: ['本人申辦'] } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['"changeType":"A"', '4:region:6', '4:region:2', '4:single'], excludes: ['"code":"PW046"', '1:single', '6:national'] } },
         { input: form({ upgradeOption: '4:region:6', newVenue: 'PX001' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
     ], check: () => {
         const r = saved[saved.length - 1];
@@ -106,72 +106,72 @@ const SCENARIOS = [
     } },
     { name: '轉館加升等：選北區卻選南區的館 → 核實不過', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '廠館轉移加卡別升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ upgradeOption: '4:region:6', newVenue: 'PW001' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '轉館加升等：澎湖馬公各區都可選', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '廠館轉移加卡別升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ upgradeOption: '4:region:6', newVenue: 'PW086' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
     ] },
     { name: '轉館加升等：選原廠館 → 核實不過', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '廠館轉移加卡別升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ upgradeOption: '4:single', newVenue: 'PW046' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '轉館加升等：全國白金 → 無可升選項並提示改選轉館', member: 'TEST0003', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '0', includes: ['會籍廠館轉移'] } }
+        { input: '廠館轉移加卡別升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '0', includes: ['會籍廠館轉移'] } }
     ] },
     { name: '轉館加升等：區域金卡 → 無可選項並提示改走升等／轉館（A 不含全國白金）', member: 'TEST0002', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '0', includes: ['會籍資格升等', '會籍廠館轉移'], excludes: ['最高等級'] } }
+        { input: '廠館轉移加卡別升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '0', includes: ['會籍資格升等', '會籍廠館轉移'], excludes: ['最高等級'] } }
     ] },
     { name: '轉館加升等：送全國白金 → 核實不過', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'TRANSFER_UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '廠館轉移加卡別升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ upgradeOption: '6:national', newVenue: 'PX001' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '取消申請', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: JSON.stringify({ action: 'CANCEL' }), expect: { isContinuum: '0', includes: ['已為您取消'] } }
     ] },
     { name: '選了不能升的卡（竄改成降級選項）→ 核實不過', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ upgradeOption: '1:single' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '啟用日太早 → 核實不過', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ actDate: tooEarly }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '手機格式錯 → 核實不過', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ contactValue: '0812345678' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: '統編不是 8 碼 → 核實不過', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ taxId: '1234' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ] },
     { name: 'Email 聯絡＋有統編 → 成功', member: 'TEST0007', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1', includes: ['區域鈦銀卡（北區）'] } },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['區域鈦銀卡（北區）'] } },
         { input: form({ contactType: 'email', contactValue: 'a@b.com', taxId: '12345678', payType: 'T' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
     ], check: () => {
         const r = saved[saved.length - 1];
@@ -182,54 +182,60 @@ const SCENARIOS = [
     } },
     { name: '全國白金卡 → 無可升選項，流程結束', member: 'TEST0003', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '0', includes: ['最高等級'] } }
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '0', includes: ['最高等級'] } }
     ] },
     { name: '行政終止 → 合約欠款提示', member: 'TEST0004', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '0', includes: ['合約欠款'] } }
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '0', includes: ['合約欠款'] } }
     ] },
     { name: '無合約 → 無符合合約狀態', member: 'TEST0005', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
     ] },
     { name: '只有到期合約 → 無符合合約狀態', member: 'TEST0008', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
     ] },
     { name: '沒帶會員識別＋未設 Qbi 預設會員 → 無符合合約狀態（不誤帶別人資料）', member: '', qbiDefault: '', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '0', includes: ['無符合合約狀態'] } }
     ] },
     { name: '沒帶會員識別＋Qbi 預設會員 TEST0001 → 可開表單（測試 WebChat 未登入用）', member: '', qbiDefault: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1', includes: ['submit="會籍資格升等"', 'submit="會籍廠館轉移"'], excludes: ['background-color:#2563eb', 'submit="UPGRADE"'] } },
         { input: '會籍資格升等', expect: { isContinuum: '1', includes: ['submit="本人申辦"'] } },
         { input: '本人申辦', expect: { isContinuum: '1', includes: ['ChangeMembershipForm'] } }
     ] },
-    { name: '舊的英文代碼仍可用（測試平台打 UPGRADE／SELF）', member: '', qbiDefault: 'TEST0001', turns: [
+    { name: '升等：澎湖馬公單館鈦銀卡自選區域（北區金卡）', member: 'TEST0006', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', 'M0000001'] } }
-    ] },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', '4:region:2', '4:region:6', '13:region:4', '單館鈦銀卡（澎湖馬公）'] } },
+        { input: form({ upgradeOption: '4:region:6' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => {
+        const r = saved[saved.length - 1];
+        const ok = r.changeType === 'U' && r.upCardType === '4' && r.remark.includes('區域金卡（北區）')
+            && r.detail && r.detail.upMembership === '6' && r.detail.oldAvailableVenue === '澎湖馬公';
+        return ok ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
+    } },
     { name: '代理他人申辦 → 交給代理人表單', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'AGENT', expect: { isContinuum: '1', includes: ['AgentForm'] } }
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '代理他人申辦', expect: { isContinuum: '1', includes: ['AgentForm'] } }
     ] },
     { name: 'ECP 建單失敗 → 告知送出失敗', member: 'TEST0001', failSave: true, turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: form({ payType: 'T' }), expect: { isContinuum: '0', includes: ['申請送出失敗'] } }
     ] },
     { name: '走完後同 chatId 重新開始', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
-        { input: 'UPGRADE', expect: { isContinuum: '1' } },
-        { input: 'SELF', expect: { isContinuum: '1' } },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
         { input: JSON.stringify({ action: 'CANCEL' }), expect: { isContinuum: '0' } },
         { input: '再一次', expect: { isContinuum: '1', includes: ['請選擇要申辦的項目'] } }
     ] }
