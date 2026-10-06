@@ -45,18 +45,21 @@ function makeProof(count) {
 function cleanProof() {
     for (const f of fs.readdirSync(studentUploadMgr.uploadDir)) if (f.startsWith('verify-')) fs.unlinkSync(path.join(studentUploadMgr.uploadDir, f));
 }
-// 測試用今天 2027-07-10（六）：暑假期間，Y 啟用日 7/15～9/30、O 最早 7/15 不限最晚。
+// 測試用今天 2027-07-10（六）：暑假受理期間，Y 啟用日 7/15～9/30、O 最早 7/15 不限最晚。
 const STUDENT_TODAY = '2027-07-10';
 const sform = (student, extra) => JSON.stringify({
     action: 'SUBMIT', contactType: 'phone', contactValue: '0912345678',
     upgradeOption: '', newVenue: 'PX001', actDate: '2027-07-15', payType: '', taxId: '', ...extra,
-    student: { agreed: true, studentType: 'Y', transferType: 'T', proof: makeProof(2), ...student }
+    student: { agreed: true, studentType: 'Y', proof: makeProof(2), ...student }
 });
-const studentOpen = [
-    { input: '開始', expect: { isContinuum: '1', includes: ['submit="學生寒暑假轉館"'] } },
-    { input: '學生寒暑假轉館', expect: { isContinuum: '1', includes: ['本人申辦'] } },
+// 學生轉館不另開按鈕：從「會籍廠館轉移」（T）或「廠館轉移加卡別升等」（A）進入，受理期間表單帶 student 區塊。
+const openForm = (type) => [
+    { input: '開始', expect: { isContinuum: '1', excludes: ['學生寒暑假轉館'] } },
+    { input: type, expect: { isContinuum: '1', includes: ['本人申辦'] } },
     { input: '本人申辦', expect: { isContinuum: '1', includes: ['ChangeMembershipForm', '"student"'] } }
 ];
+const studentOpen = openForm('會籍廠館轉移');
+const studentOpenA = openForm('廠館轉移加卡別升等');
 
 const today = UpgradeRule.toISODate(new Date());
 const minDate = UpgradeRule.minActivationDate(today);
@@ -274,18 +277,45 @@ const SCENARIOS = [
         { input: '再一次', expect: { isContinuum: '1', includes: ['請選擇要申辦的項目'] } }
     ] },
     // ---- 學生寒暑假轉館（FF-04-02）----
-    { name: '學生：不在開放期間（10/6）→ 沒有學生按鈕，硬送按鈕文字要重選', member: 'TEST0001', today: '2026-10-06', turns: [
-        { input: '開始', expect: { isContinuum: '1', includes: ['submit="會籍資格升等"'], excludes: ['學生寒暑假轉館'] } },
-        { input: '學生寒暑假轉館', expect: { isContinuum: '1', includes: ['請點選要申辦的項目'] } }
+    { name: '學生：不在受理期間（10/6）→ 轉館表單不帶學生區塊，一般轉館照常送件', member: 'TEST0001', today: '2026-10-06', turns: [
+        { input: '開始', expect: { isContinuum: '1', excludes: ['學生寒暑假轉館'] } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['"changeType":"T"'], excludes: ['"student"'] } },
+        { input: form({ upgradeOption: '', newVenue: 'PX001', actDate: UpgradeRule.minActivationDate('2026-10-06') }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => { const r = saved[saved.length - 1]; return !r.student ? '' : '非學生件不應寫 U_StudentOnly'; } },
+    { name: '學生：不在受理期間硬送學生資料 → 核實不過', member: 'TEST0001', today: '2026-10-06', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
+        { input: sform({}, { actDate: '2026-10-12' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
+    ], check: (sc) => (saved.length !== sc.savedBefore ? '不應寫 ECP' : '') },
+    { name: '學生：受理期間 12/10 → 轉館表單帶學生區塊，Y 啟用日從 1/1 起', member: 'TEST0001', today: '2026-12-10', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['"student"', '"periodName":"2027 寒假"', '"minActDate":"2027-01-01"', '"maxActDate":"2027-02-28"'] } }
     ] },
-    { name: '學生：寒假期間（2027-01-04）→ 第 4 顆按鈕出現', member: 'TEST0001', today: '2027-01-04', turns: [
-        { input: '開始', expect: { isContinuum: '1', includes: ['submit="會籍資格升等"', 'submit="會籍廠館轉移"', 'submit="廠館轉移加卡別升等"', 'submit="學生寒暑假轉館"'] } }
+    { name: '學生：會籍資格升等不帶學生區塊', member: 'TEST0001', today: STUDENT_TODAY, turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: '會籍資格升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['"changeType":"U"'], excludes: ['"student"'] } }
     ] },
-    { name: '學生：表單帶須知、Y／O 啟用日範圍、T／A 選項、新館清單（排除原館）', member: 'TEST0001', today: STUDENT_TODAY, turns: [
+    { name: '學生：轉館表單帶須知、Y／O 啟用日範圍、上傳限制', member: 'TEST0001', today: STUDENT_TODAY, turns: [
         studentOpen[0], studentOpen[1],
-        { input: '本人申辦', expect: { isContinuum: '1', includes: ['"applyDate":"2027-07-10"', '學生寒暑假限定轉館僅限寒暑假期間申請', '"value":"Y"', '"minActDate":"2027-07-15"', '"maxActDate":"2027-09-30"', '"value":"O"', '"maxActDate":""', '4:region:6', 'PX001', '"maxFileCount":5'], excludes: ['"code":"PW046"'] } }
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['"changeType":"T"', '"applyDate":"2027-07-10"', '本項限受理時間為每年 12/01~2/29、06/01~09/30 止', '"value":"Y"', '"minActDate":"2027-07-15"', '"maxActDate":"2027-09-30"', '"value":"O"', '"maxActDate":""', 'PX001', '"maxFileCount":5'], excludes: ['"code":"PW046"', 'transferTypes'] } }
     ] },
-    { name: '學生：轉出新廠館＋轉館（Y／T）→ 寫 U_StudentOnly=Y、附件 2 檔、繳費方式免填', member: 'TEST0001', today: STUDENT_TODAY, turns: [
+    { name: '學生：轉館加升等表單也有轉出／轉回（SA 2026-10-06）', member: 'TEST0001', today: STUDENT_TODAY, turns: [
+        studentOpenA[0], studentOpenA[1],
+        { input: '本人申辦', expect: { isContinuum: '1', includes: ['"changeType":"A"', '"value":"Y"', '"value":"O"', '4:region:6'] } }
+    ] },
+    { name: '學生：廠館轉移加卡別升等＋轉回原廠館（A／O）→ U_StudentOnly=O、升等卡別正確', member: 'TEST0001', today: STUDENT_TODAY, turns: [
+        ...studentOpenA,
+        { input: sform({ studentType: 'O' }, { upgradeOption: '4:region:6', payType: 'C', actDate: '2027-12-01' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => {
+        const r = saved[saved.length - 1];
+        const ok = r.changeType === 'A' && r.upCardType === '4' && r.student.studentOnly === 'O' && r.remark.startsWith('學生寒暑假轉館（轉回原廠館）') && attachments.length === 2;
+        return ok ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
+    } },
+    { name: '學生：會籍廠館轉移＋轉出新廠館（T／Y）→ 寫 U_StudentOnly=Y、附件 2 檔、繳費方式免填', member: 'TEST0001', today: STUDENT_TODAY, turns: [
         ...studentOpen,
         { input: sform(), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
     ], check: () => {
@@ -297,16 +327,16 @@ const SCENARIOS = [
             && attachments[0].fileName === '學生證1.jpg';
         return ok ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}／附件 ${JSON.stringify(attachments)}`;
     } },
-    { name: '學生：轉出新廠館＋轉館加升等（Y／A）→ 升等卡別正確、繳費方式必填', member: 'TEST0001', today: STUDENT_TODAY, turns: [
-        ...studentOpen,
-        { input: sform({ transferType: 'A' }, { upgradeOption: '4:region:6', payType: 'T', actDate: '2027-09-30' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    { name: '學生：廠館轉移加卡別升等＋轉出新廠館（A／Y）→ 升等卡別正確、繳費方式必填', member: 'TEST0001', today: STUDENT_TODAY, turns: [
+        ...studentOpenA,
+        { input: sform({}, { upgradeOption: '4:region:6', payType: 'T', actDate: '2027-09-30' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
     ], check: () => {
         const r = saved[saved.length - 1];
         const ok = r.changeType === 'A' && r.upCardType === '4' && r.payType === 'T' && r.actDate === '2027-09-30'
             && r.student.studentOnly === 'Y' && r.detail.upMembership === '6' && r.remark.includes('區域金卡（北區）') && attachments.length === 2;
         return ok ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
     } },
-    { name: '學生：轉回原廠館（O／T）→ U_StudentOnly=O、啟用日可超過暑假期末', member: 'TEST0001', today: STUDENT_TODAY, turns: [
+    { name: '學生：會籍廠館轉移＋轉回原廠館（T／O）→ U_StudentOnly=O、啟用日可超過暑假期末', member: 'TEST0001', today: STUDENT_TODAY, turns: [
         ...studentOpen,
         { input: sform({ studentType: 'O' }, { actDate: '2027-12-01', payType: 'C' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
     ], check: () => {
@@ -314,23 +344,25 @@ const SCENARIOS = [
         const ok = r.changeType === 'T' && r.payType === 'C' && r.student.studentOnly === 'O' && r.remark.startsWith('學生寒暑假轉館（轉回原廠館）');
         return ok ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
     } },
-    ...[
-        ['轉回原廠館＋轉館加升等', sform({ studentType: 'O', transferType: 'A' }, { upgradeOption: '4:region:6', payType: 'C', actDate: '2027-08-01' })],
-        ['未勾須知', sform({ agreed: false })],
-        ['沒附學生證明', sform({ proof: [] })],
-        ['學生證明超過 5 檔', sform({ proof: makeProof(6) })],
-        ['學生證明 fileId 不存在', sform({ proof: [{ fileId: 'not-exist.jpg', fileName: 'x.jpg' }] })],
-        ['學生證明 fileId 路徑穿越', sform({ proof: [{ fileId: '../../package.json', fileName: 'x.jpg' }] })],
-        ['Y 啟用日早於最早日（7/14）', sform({}, { actDate: '2027-07-14' })],
-        ['Y 啟用日超過暑假期末（10/1）', sform({}, { actDate: '2027-10-01' })],
-        ['O 啟用日早於最早日（7/14）', sform({ studentType: 'O' }, { actDate: '2027-07-14' })],
-        ['轉館加升等沒填繳費方式', sform({ transferType: 'A' }, { upgradeOption: '4:region:6' })],
-        ['轉館加升等選了不可升的卡', sform({ transferType: 'A' }, { upgradeOption: '6:national', payType: 'C' })],
-        ['選原廠館', sform({}, { newVenue: 'PW046' })],
-        ['轉出／轉回亂填', sform({ studentType: 'X' })],
-        ['缺少學生區塊', form({ upgradeOption: '', newVenue: 'PX001', actDate: '2027-07-15' })]
-    ].map(([label, input]) => ({ name: `學生：${label} → 核實不過、不寫 ECP、不上傳附件`, member: 'TEST0001', today: STUDENT_TODAY, turns: [
+    { name: '學生：受理期間內不勾學生 → 一般轉館（繳費方式仍必填、不寫學生欄位）', member: 'TEST0001', today: STUDENT_TODAY, turns: [
         ...studentOpen,
+        { input: form({ upgradeOption: '', newVenue: 'PX001', actDate: '2027-07-15', student: { studentType: '' } }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => { const r = saved[saved.length - 1]; return !r.student && r.payType === 'C' && attachments.length === 0 ? '' : `不應是學生件：${JSON.stringify(r)}`; } },
+    ...[
+        ['轉館', '未勾須知', sform({ agreed: false })],
+        ['轉館', '沒附學生證明', sform({ proof: [] })],
+        ['轉館', '學生證明超過 5 檔', sform({ proof: makeProof(6) })],
+        ['轉館', '學生證明 fileId 不存在', sform({ proof: [{ fileId: 'not-exist.jpg', fileName: 'x.jpg' }] })],
+        ['轉館', '學生證明 fileId 路徑穿越', sform({ proof: [{ fileId: '../../package.json', fileName: 'x.jpg' }] })],
+        ['轉館', 'Y 啟用日早於最早日（7/14）', sform({}, { actDate: '2027-07-14' })],
+        ['轉館', 'Y 啟用日超過暑假期末（10/1）', sform({}, { actDate: '2027-10-01' })],
+        ['轉館', 'O 啟用日早於最早日（7/14）', sform({ studentType: 'O' }, { actDate: '2027-07-14' })],
+        ['轉館加升等', '沒填繳費方式', sform({}, { upgradeOption: '4:region:6' }), studentOpenA],
+        ['轉館加升等', '選了不可升的卡', sform({}, { upgradeOption: '6:national', payType: 'C' }), studentOpenA],
+        ['轉館', '選原廠館', sform({}, { newVenue: 'PW046' })],
+        ['轉館', '轉出／轉回亂填', sform({ studentType: 'X' })]
+    ].map(([kind, label, input, open]) => ({ name: `學生（${kind}）：${label} → 核實不過、不寫 ECP、不上傳附件`, member: 'TEST0001', today: STUDENT_TODAY, turns: [
+        ...(open || studentOpen),
         { input, expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
     ], check: (sc) => (saved.length !== sc.savedBefore ? '不應寫 ECP' : attachments.length ? `不應上傳附件，實際 ${attachments.length}` : '') })),
     { name: '學生：建單失敗 → 告知送出失敗、不上傳附件', member: 'TEST0001', today: STUDENT_TODAY, failSave: true, turns: [
@@ -340,18 +372,7 @@ const SCENARIOS = [
     { name: '學生：取消 → 不寫 ECP', member: 'TEST0001', today: STUDENT_TODAY, turns: [
         ...studentOpen,
         { input: JSON.stringify({ action: 'CANCEL' }), expect: { isContinuum: '0', includes: ['已為您取消'] } }
-    ] },
-    { name: '學生：代理他人申辦 → 交給代理人表單', member: 'TEST0001', today: STUDENT_TODAY, turns: [
-        studentOpen[0], studentOpen[1],
-        { input: '代理他人申辦', expect: { isContinuum: '1', includes: ['AgentForm'] } }
-    ] },
-    { name: '學生件走完後重新開始 → 一般升等不帶學生欄位', member: 'TEST0001', today: STUDENT_TODAY, turns: [
-        ...studentOpen,
-        { input: JSON.stringify({ action: 'CANCEL' }), expect: { isContinuum: '0' } },
-        { input: '再一次', expect: { isContinuum: '1', includes: ['submit="學生寒暑假轉館"'] } },
-        { input: '會籍資格升等', expect: { isContinuum: '1' } },
-        { input: '本人申辦', wait: 600, expect: { isContinuum: '1', includes: ['"changeType":"U"'], excludes: ['"student"'] } }
-    ] }
+    ], check: (sc) => (saved.length !== sc.savedBefore ? '不應寫 ECP' : '') }
 ];
 
 function post(port, body) {

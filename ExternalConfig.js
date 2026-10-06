@@ -197,8 +197,9 @@ module.exports = {
             Enabled: true,
             PeriodUnit: 'CUS.StudentTransferPeriod',
             DefaultPeriods: [
-                { name: '寒假', openFrom: '01-01', openTo: '02-29', actFrom: '01-01', actTo: '02-29' },
-                { name: '暑假', openFrom: '07-01', openTo: '09-30', actFrom: '07-01', actTo: '09-30' }
+                // 受理（顯示）期間 12/01~2/29、06/01~09/30；啟用日期間 1/1~2/29、7/1~9/30（學生轉館須知）。
+                { name: '寒假', openFrom: '12-01', openTo: '02-29', actFrom: '01-01', actTo: '02-29' },
+                { name: '暑假', openFrom: '06-01', openTo: '09-30', actFrom: '07-01', actTo: '09-30' }
             ],
             QbiTestToday: ''
         }

@@ -11,8 +11,8 @@ function t(name, fn) {
 
 // 與 ExternalConfig.ChangeMembership.Student.DefaultPeriods 相同的預設值
 const DEFAULTS = [
-    { name: '寒假', openFrom: '01-01', openTo: '02-29', actFrom: '01-01', actTo: '02-29' },
-    { name: '暑假', openFrom: '07-01', openTo: '09-30', actFrom: '07-01', actTo: '09-30' }
+    { name: '寒假', openFrom: '12-01', openTo: '02-29', actFrom: '01-01', actTo: '02-29' },
+    { name: '暑假', openFrom: '06-01', openTo: '09-30', actFrom: '07-01', actTo: '09-30' }
 ];
 const periodOn = today => R.findOpenPeriod(today, R.expandDefaultPeriods(DEFAULTS, today));
 const rangeOn = (today, studentType) => R.activationRange({ today, studentType, period: periodOn(today) });
@@ -38,10 +38,18 @@ t('7/1、9/30 在暑假期間', () => {
     assert.strictEqual(periodOn('2027-07-01').actTo, '2027-09-30');
     assert.strictEqual(periodOn('2027-09-30').actFrom, '2027-07-01');
 });
-t('跨年開放：12/1 開始開放寒假 → 12/10 屬 2027 寒假', () => {
-    const p = R.findOpenPeriod('2026-12-10', R.expandDefaultPeriods([{ name: '寒假', openFrom: '12-01', openTo: '02-29', actFrom: '01-01', actTo: '02-29' }], '2026-12-10'));
-    assert.strictEqual(p.openFrom, '2026-12-01'); assert.strictEqual(p.actFrom, '2027-01-01'); assert.strictEqual(p.actTo, '2027-02-28');
+t('跨年受理：12/1 開始受理寒假 → 12/1、12/10 屬 2027 寒假', () => {
+    for (const d of ['2026-12-01', '2026-12-10']) {
+        const p = periodOn(d);
+        assert.strictEqual(p.openFrom, '2026-12-01'); assert.strictEqual(p.actFrom, '2027-01-01'); assert.strictEqual(p.actTo, '2027-02-28');
+    }
 });
+t('6/1 開始受理暑假，啟用日仍從 7/1 起', () => {
+    const p = periodOn('2027-06-01');
+    assert.strictEqual(p.openFrom, '2027-06-01'); assert.strictEqual(p.actFrom, '2027-07-01');
+});
+t('Y：6/15 申請 → 最早＝啟用起日 7/1、最晚 9/30', () => assert.deepStrictEqual(rangeOn('2027-06-15', 'Y'), { min: '2027-07-01', max: '2027-09-30' }));
+t('O：6/15（二）申請 → 最早 6/19、不限最晚（不受啟用日期間限制）', () => assert.deepStrictEqual(rangeOn('2027-06-15', 'O'), { min: '2027-06-19', max: null }));
 
 // ECP 參數（完整日期）
 t('ECP 日期格式轉換', () => {
