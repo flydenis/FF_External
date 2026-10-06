@@ -21,9 +21,10 @@ class ChangeMembershipApplicationApiMgr {
     //   （4 欄 2026-09-29 於 ECP 試建，待 SA 確認 Q11／Q12；ExternalConfig.ChangeMembership.WriteDetailFields 關掉即不送）
     //   備註 -> U_Remark：升等前後的文字說明，方便客服閱讀
     //   新主要使用廠館（轉館／轉館加升等）-> U_TransNewVenue1（store_code）、U_TransCity1／U_TransArea1（轉成 ECP 字典值，見 TransferDictMap）
+    //   次要使用廠館（雙區身分適用，選填）-> U_TransNewVenue2、U_TransCity2／U_TransArea2（同上轉換）
     //   學生寒暑假轉館（FF-04-02）：轉出新廠館／轉回原廠館 -> U_StudentOnly（字典「健工_寒暑假學生限定」Y／O）、
     //   已附有效學生證明 -> U_ValidstudentIdDoc（勾選框，送 1）；非學生件兩欄都不送
-    async saveApplication({ memberCode, memberName, contractNo, applyTime, contactType, contactValue, changeType, upCardType, actDate, payType, taxId, remark, detail, transfer, student, logger }) {
+    async saveApplication({ memberCode, memberName, contractNo, applyTime, contactType, contactValue, changeType, upCardType, actDate, payType, taxId, remark, detail, transfer, transfer2, student, logger }) {
         const record = {
             U_MemberCode: memberCode,
             FName: memberName,
@@ -46,6 +47,13 @@ class ChangeMembershipApplicationApiMgr {
             const area = TransferDictMap.areaValue(transfer.region);
             if (city) record.U_TransCity1 = city;
             if (area) record.U_TransArea1 = area;
+        }
+        if (transfer2) {
+            record.U_TransNewVenue2 = transfer2.storeCode;
+            const city = TransferDictMap.cityValue(transfer2.city);
+            const area = TransferDictMap.areaValue(transfer2.region);
+            if (city) record.U_TransCity2 = city;
+            if (area) record.U_TransArea2 = area;
         }
         if (detail) {
             if (detail.upMembership) record.U_UpMembership = detail.upMembership;

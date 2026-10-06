@@ -179,6 +179,7 @@ class ChangeMembershipFlow extends IntentBaseFlow {
             taxId: checked.taxId,
             remark: this.buildRemark(checked),
             transfer: checked.venue ? { storeCode: checked.venue.code, city: checked.venue.city, region: checked.venue.region } : null,
+            transfer2: checked.secondVenue ? { storeCode: checked.secondVenue.code, city: checked.secondVenue.city, region: checked.secondVenue.region } : null,
             student: checked.student ? { studentOnly: checked.student.studentType, validStudentIdDoc: checked.student.proof.length > 0 } : null,
             detail: this.settings().WriteDetailFields ? {
                 upMembership: checked.selected ? UpgradeRule.membershipAfter(checked.selected) : null,
@@ -200,7 +201,7 @@ class ChangeMembershipFlow extends IntentBaseFlow {
     }
 
     // 備註（U_Remark）：升等前後的文字說明，方便客服閱讀。
-    buildRemark({ selected, venue, student }) {
+    buildRemark({ selected, venue, secondVenue, student }) {
         const parts = [];
         if (student) {
             const type = T.StudentTypes.find(t => t.value === student.studentType);
@@ -208,6 +209,7 @@ class ChangeMembershipFlow extends IntentBaseFlow {
         }
         if (selected) parts.push(`升等後：${selected.label}`);
         if (venue) parts.push(`新主要使用廠館：${venue.name}`);
+        if (secondVenue) parts.push(`次要使用廠館：${secondVenue.name}`);
         return `${parts.join('；')}（原：${UpgradeRule.describeCurrent(this.contract)}）`;
     }
 
@@ -243,6 +245,19 @@ class ChangeMembershipFlow extends IntentBaseFlow {
             venue = TransferRule.venueInfo(form.newVenue);
         }
 
+        // 次要使用區域（雙區身分適用，選填；需求書 p.88「雙區卡填兩組，須避免兩區相同」）：
+        // 有填才核實，須在可選清單內（不可是原廠館），且與主要使用廠館不同區（澎湖馬公 region 為 null，視為「其他」一區）。
+        let secondVenue = null;
+        if (this.changeType !== 'U' && form.secondVenue) {
+            if (!TransferRule.isAllowedVenue({ storeCode: form.secondVenue, excludeStoreCode: this.contract.storeCode })) {
+                return { ok: false, reason: `次要使用廠館不可選（${form.secondVenue}，原館 ${this.contract.storeCode}）` };
+            }
+            secondVenue = TransferRule.venueInfo(form.secondVenue);
+            if ((secondVenue.region || 'other') === (venue.region || 'other')) {
+                return { ok: false, reason: `次要使用廠館與主要使用廠館同區（${form.secondVenue}／${form.newVenue}）` };
+            }
+        }
+
         if (!student) {
             const minDate = this.minActDate(this.today());
             if (!UpgradeRule.isValidActivationDate(form.actDate, minDate)) return { ok: false, reason: `啟用日 ${form.actDate} 早於最早可選日 ${minDate}` };
@@ -255,7 +270,7 @@ class ChangeMembershipFlow extends IntentBaseFlow {
         const taxId = String(form.taxId || '').trim();
         if (taxId && !TAX_ID_PATTERN.test(taxId)) return { ok: false, reason: '統編不是 8 碼數字' };
 
-        return { ok: true, selected, venue, taxId, student };
+        return { ok: true, selected, venue, secondVenue, taxId, student };
     }
 
     // 學生區塊核實：須知已勾、Y／O、啟用日在範圍內、學生證明 1～N 檔且都在暫存區。

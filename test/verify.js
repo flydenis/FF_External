@@ -129,6 +129,57 @@ const SCENARIOS = [
         { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
         { input: '本人申辦', expect: { isContinuum: '1', includes: ['ChangeMembershipForm'] } }
     ] },
+    // ---- 次要使用區域（雙區身分適用，選填；需求書 p.88 兩區不可相同）----
+    { name: '轉館＋次要使用區域（北區台北信義＋南區高雄博愛）→ 寫第二館', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '', newVenue: 'PX001', secondVenue: 'PW001' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => {
+        const r = saved[saved.length - 1];
+        const ok = r.transfer && r.transfer.storeCode === 'PX001' && r.transfer2 && r.transfer2.storeCode === 'PW001'
+            && r.transfer2.city === '高雄市' && r.transfer2.region === '2' && r.remark.includes('次要使用廠館：高雄博愛');
+        return ok ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
+    } },
+    { name: '轉館不填次要使用區域 → 不寫第二館', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '', newVenue: 'PX001', secondVenue: '' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => {
+        const r = saved[saved.length - 1];
+        return !r.transfer2 && !r.remark.includes('次要使用廠館') ? '' : `不該寫第二館：${JSON.stringify(r)}`;
+    } },
+    { name: '次要與主要同區（台北信義＋台北健康）→ 核實不過', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '', newVenue: 'PX001', secondVenue: 'PW048' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
+    ] },
+    { name: '次要選原廠館（竄改）→ 核實不過', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '', newVenue: 'PX001', secondVenue: 'PW046' }), expect: { isContinuum: '0', includes: ['表單資料不完整或有誤'] } }
+    ] },
+    { name: '主要澎湖馬公（其他）＋次要台北信義 → 通過', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: '會籍廠館轉移', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '', newVenue: 'PW086', secondVenue: 'PX001' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => {
+        const r = saved[saved.length - 1];
+        return r.transfer.storeCode === 'PW086' && r.transfer2.storeCode === 'PX001' ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
+    } },
+    { name: '轉館加升等＋次要使用區域（區域金卡北區＋南區）→ 寫第二館', member: 'TEST0001', turns: [
+        { input: '開始', expect: { isContinuum: '1' } },
+        { input: '廠館轉移加卡別升等', expect: { isContinuum: '1' } },
+        { input: '本人申辦', expect: { isContinuum: '1' } },
+        { input: form({ upgradeOption: '4:region:6', newVenue: 'PX001', secondVenue: 'PW001' }), expect: { isContinuum: '0', includes: ['線上申請需約三個工作日'] } }
+    ], check: () => {
+        const r = saved[saved.length - 1];
+        return r.changeType === 'A' && r.transfer2 && r.transfer2.storeCode === 'PW001' ? '' : `寫入 ECP 內容不符：${JSON.stringify(r)}`;
+    } },
     // ---- 廠館轉移加卡別升等（A）----
     { name: '轉館加升等 happy path（單館銀卡 → 區域金卡北區＋台北信義）', member: 'TEST0001', turns: [
         { input: '開始', expect: { isContinuum: '1' } },
