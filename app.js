@@ -35,6 +35,7 @@ const PauseEarlyOpenFlow = require('./ExternalFlow/PauseEarlyOpenFlow');
 const CoachContractQueryFlow = require('./ExternalFlow/CoachContractQueryFlow');
 const CoachPaymentHistoryQueryFlow = require('./ExternalFlow/CoachPaymentHistoryQueryFlow');
 const ChangeMembershipFlow = require('./ExternalFlow/ChangeMembershipFlow');
+const studentTransferUploadMgr = require('./Api/StudentTransferUploadMgr');
 const { arrayUpload, buildFileRefs } = require('./Api/PersonalDataChangeUploadMgr');
 const { arrayUpload: agentArrayUpload, buildFileRefs: buildAgentFileRefs } = require('./Api/AgentUploadMgr');
 
@@ -157,6 +158,7 @@ app.post('/PersonalDataChangeUpload', handleUpload(personalDataChangeUploadMgr, 
 app.post('/AgentUpload', handleUpload(agentUploadMgr, 'AgentUpload'));
 app.post('/LeaveUpload', handleUpload(leaveUploadMgr, 'LeaveUpload'));
 app.post('/DeductionCardChangeUpload', handleUpload(deductionCardChangeUploadMgr, 'DeductionCardChangeUpload'));
+app.post('/StudentTransferUpload', handleUpload(studentTransferUploadMgr, 'StudentTransferUpload'));
 
 app.use((req, res, next) => next(createError(404)));
 app.use((err, req, res, next) => { res.status(err.status || 500).json({ error: err.message }); });
